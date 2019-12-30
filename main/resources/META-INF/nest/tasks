@@ -1,0 +1,3 @@
+saker.maven.resolve=saker.maven.support.main.dependency.ResolveMavenDependencyTaskFactory
+saker.maven.download=saker.maven.support.main.download.DownloadArtifactsTaskFactory
+saker.maven.localize=saker.maven.support.main.localize.LocalizeArtifactsTaskFactory
