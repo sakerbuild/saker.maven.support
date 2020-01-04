@@ -45,7 +45,8 @@ public class ArtifactLocalizationUtils {
 	 * @see #createLocalizeArtifactsTaskIdentifier(MavenOperationConfiguration, Set)
 	 */
 	public static TaskFactory<? extends ArtifactLocalizationTaskOutput> createLocalizeArtifactsTaskFactory(
-			MavenOperationConfiguration config, Set<? extends ArtifactCoordinates> coordinates) {
+			MavenOperationConfiguration config, Set<? extends ArtifactCoordinates> coordinates)
+			throws NullPointerException {
 		return new LocalizeArtifactsWorkerTaskFactory(config, coordinates);
 	}
 
@@ -66,7 +67,7 @@ public class ArtifactLocalizationUtils {
 	 * @see #createLocalizeArtifactsTaskFactory(MavenOperationConfiguration, Set)
 	 */
 	public static TaskIdentifier createLocalizeArtifactsTaskIdentifier(MavenOperationConfiguration config,
-			Set<? extends ArtifactCoordinates> coordinates) {
+			Set<? extends ArtifactCoordinates> coordinates) throws NullPointerException {
 		return new LocalizeArtifactsWorkerTaskFactory(config, coordinates);
 	}
 }
