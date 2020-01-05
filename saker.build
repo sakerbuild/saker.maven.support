@@ -95,6 +95,10 @@ export(
 				Directory: $compile[javac][ClassDirectory],
 				Resources: saker/maven/support/impl/**,
 			},
+			{
+				Files: LICENSE,
+				TargetDirectory: META-INF,
+			},
 		],
 		Manifest: {
 			MainAttributes: {
@@ -118,6 +122,10 @@ export(
 			{
 				Directory: impl/src/main/,
 				Resources: **/*.java,
+			},
+			{
+				Files: LICENSE,
+				TargetDirectory: META-INF,
 			},
 		],
 		Manifest: {
