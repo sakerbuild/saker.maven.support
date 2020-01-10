@@ -14,6 +14,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /**
- * Contains classes that are associated with Maven artifact localization.
+ * Contains classes that are associated with Maven artifact deployment.
  */
-package saker.maven.support.api.localize;
+package saker.maven.support.api.deploy;

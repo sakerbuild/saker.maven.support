@@ -289,27 +289,27 @@ public class TaskDocs {
 	public static class DocDeploymentSpecifier {
 	}
 
-	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.FILE_PATH)
+	@NestTypeInformation(qualifiedName = "SakerPath")
 	@NestInformation("Path to the Maven artifact that is being deployed.")
 	public static class DocDeployArtifactPath {
 	}
 
-	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.FILE_PATH)
+	@NestTypeInformation(qualifiedName = "SakerPath")
 	@NestInformation("Path to the Maven artifact that is being installed.")
 	public static class DocInstallArtifactPath {
 	}
 
-	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.DIRECTORY_PATH)
+	@NestTypeInformation(qualifiedName = "SakerPath")
 	@NestInformation("Local file system path to a Maven repository.")
 	public static class DocLocalRepositoryPath {
 	}
 
-	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.FILE_PATH)
+	@NestTypeInformation(qualifiedName = "SakerPath")
 	@NestInformation("Execution path to a Maven pom.xml.")
 	public static class DocMavenPomPath {
 	}
 
-	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.FILE_PATH)
+	@NestTypeInformation(qualifiedName = "SakerPath")
 	@NestInformation("Local file system path to a private key store that can be used to authenticate to Maven remote repositories.")
 	public static class DocPrivateKeyLocalPath {
 	}
