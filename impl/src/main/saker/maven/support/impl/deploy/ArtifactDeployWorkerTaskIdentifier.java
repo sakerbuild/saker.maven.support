@@ -13,44 +13,52 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package saker.maven.support.impl.install;
+package saker.maven.support.impl.deploy;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import saker.build.task.identifier.TaskIdentifier;
 import saker.maven.support.api.ArtifactCoordinates;
-import saker.maven.support.api.MavenOperationConfiguration;
+import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 
-public class ArtifactInstallWorkerTaskIdentifier implements TaskIdentifier, Externalizable {
+public class ArtifactDeployWorkerTaskIdentifier implements TaskIdentifier, Externalizable {
 	private static final long serialVersionUID = 1L;
 
-	private MavenOperationConfiguration configuration;
+	private RepositoryConfiguration remoteRepository;
 	private ArtifactCoordinates coordinates;
 
 	/**
 	 * For {@link Externalizable}.
 	 */
-	public ArtifactInstallWorkerTaskIdentifier() {
+	public ArtifactDeployWorkerTaskIdentifier() {
 	}
 
-	public ArtifactInstallWorkerTaskIdentifier(MavenOperationConfiguration configuration,
-			ArtifactCoordinates coordinates) {
-		this.configuration = configuration;
+	public ArtifactDeployWorkerTaskIdentifier(RepositoryConfiguration configuration, ArtifactCoordinates coordinates) {
+		Objects.requireNonNull(configuration, "repository configuration");
+		Objects.requireNonNull(coordinates, "coordinates");
+		if (coordinates.getExtension() != null) {
+			throw new IllegalArgumentException("Deploy coordinates must not have extension.");
+		}
+		if (coordinates.getClassifier() != null) {
+			throw new IllegalArgumentException("Deploy coordinates must not have classifier.");
+		}
+		this.remoteRepository = configuration;
 		this.coordinates = coordinates;
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(configuration);
+		out.writeObject(remoteRepository);
 		out.writeObject(coordinates);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		configuration = (MavenOperationConfiguration) in.readObject();
+		remoteRepository = (RepositoryConfiguration) in.readObject();
 		coordinates = (ArtifactCoordinates) in.readObject();
 	}
 
@@ -58,7 +66,7 @@ public class ArtifactInstallWorkerTaskIdentifier implements TaskIdentifier, Exte
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((configuration == null) ? 0 : configuration.hashCode());
+		result = prime * result + ((remoteRepository == null) ? 0 : remoteRepository.hashCode());
 		result = prime * result + ((coordinates == null) ? 0 : coordinates.hashCode());
 		return result;
 	}
@@ -71,11 +79,11 @@ public class ArtifactInstallWorkerTaskIdentifier implements TaskIdentifier, Exte
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ArtifactInstallWorkerTaskIdentifier other = (ArtifactInstallWorkerTaskIdentifier) obj;
-		if (configuration == null) {
-			if (other.configuration != null)
+		ArtifactDeployWorkerTaskIdentifier other = (ArtifactDeployWorkerTaskIdentifier) obj;
+		if (remoteRepository == null) {
+			if (other.remoteRepository != null)
 				return false;
-		} else if (!configuration.equals(other.configuration))
+		} else if (!remoteRepository.equals(other.remoteRepository))
 			return false;
 		if (coordinates == null) {
 			if (other.coordinates != null)
@@ -87,7 +95,8 @@ public class ArtifactInstallWorkerTaskIdentifier implements TaskIdentifier, Exte
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[" + (configuration != null ? "configuration=" + configuration + ", " : "")
+		return getClass().getSimpleName() + "["
+				+ (remoteRepository != null ? "remoteRepository=" + remoteRepository + ", " : "")
 				+ (coordinates != null ? "coordinates=" + coordinates : "") + "]";
 	}
 

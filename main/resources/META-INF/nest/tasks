@@ -4,3 +4,4 @@ saker.maven.localize=saker.maven.support.main.localize.LocalizeArtifactsTaskFact
 saker.maven.auth.account=saker.maven.support.main.auth.AccountAuthenticationTaskFactory
 saker.maven.auth.privatekey=saker.maven.support.main.auth.PrivateKeyAuthenticationTaskFactory
 saker.maven.install=saker.maven.support.main.install.InstallArtifactsTaskFactory
+saker.maven.deploy=saker.maven.support.main.deploy.DeployArtifactsTaskFactory

@@ -66,7 +66,11 @@ import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.Repositor
 import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.checksum.ChecksumPolicy;
 import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.checksum.ChecksumPolicyProvider;
 import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.transport.TransporterFactory;
+import saker.maven.support.thirdparty.org.eclipse.aether.spi.log.LoggerFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.transfer.ChecksumFailureException;
+import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferCancelledException;
+import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferEvent;
+import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferListener;
 import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferResource;
 import saker.maven.support.thirdparty.org.eclipse.aether.transport.file.FileTransporterFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.transport.http.HttpTransporterFactory;
@@ -130,11 +134,16 @@ public class MavenImplUtils {
 		serviceLocator.addService(TransporterFactory.class, HttpTransporterFactory.class);
 		serviceLocator.setService(ModelBuilder.class, BugFixModelBuilder.class);
 		serviceLocator.setServices(ChecksumPolicyProvider.class, new SupportChecksumPolicyProvider());
+		serviceLocator.setServices(LoggerFactory.class);
 
 		serviceLocator.setErrorHandler(new SneakyThrowingErrorHandler());
 		return serviceLocator;
 	}
 
+	/**
+	 * @param config
+	 *            May be <code>null</code>. In that case properties related to it are not set.
+	 */
 	public static DefaultRepositorySystemSession createNewSession(TaskContext taskcontext,
 			MavenOperationConfiguration config) {
 		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();

@@ -13,7 +13,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package saker.maven.support.main.install;
+package saker.maven.support.main.deploy;
+
+import java.util.Map;
+import java.util.NavigableMap;
 
 import saker.build.file.path.SakerPath;
 import saker.build.runtime.execution.ExecutionContext;
@@ -23,48 +26,50 @@ import saker.build.task.identifier.TaskIdentifier;
 import saker.build.task.utils.SimpleStructuredObjectTaskResult;
 import saker.build.task.utils.annot.SakerInput;
 import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
+import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.maven.support.api.ArtifactCoordinates;
-import saker.maven.support.api.MavenOperationConfiguration;
-import saker.maven.support.impl.install.ArtifactInstallWorkerTaskFactory;
-import saker.maven.support.main.configuration.option.MavenConfigurationTaskOption;
+import saker.maven.support.impl.deploy.ArtifactDeployWorkerTaskFactory;
 import saker.maven.support.main.configuration.option.MavenOperationConfigurationTaskOptionUtils;
+import saker.maven.support.main.configuration.option.RepositoryTaskOption;
 import saker.nest.utils.FrontendTaskFactory;
 
 //TODO taskdoc
-public class InstallArtifactsTaskFactory extends FrontendTaskFactory<Object> {
+public class DeployArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 	private static final long serialVersionUID = 1L;
 
-	public static final String TASK_NAME = "saker.maven.install";
+	public static final String TASK_NAME = "saker.maven.deploy";
 
 	@Override
 	public ParameterizableTask<? extends Object> createTask(ExecutionContext executioncontext) {
 		return new ParameterizableTask<Object>() {
-
-			@SakerInput(value = { "ArtifactPath" }, required = true)
-			public SakerPath artifactPathOption;
+			@SakerInput(value = { "", "Artifacts" }, required = true)
+			public Map<String, SakerPath> artifactsOption;
 			@SakerInput(value = { "Coordinates" }, required = true)
 			public ArtifactCoordinates coordinatesOption;
 
-			@SakerInput(value = { "Configuration" })
-			public MavenConfigurationTaskOption configurationOption;
+			@SakerInput(value = { "RemoteRepository" }, required = true)
+			public RepositoryTaskOption repositoryOption;
 
 			@Override
 			public Object run(TaskContext taskcontext) throws Exception {
-				if (artifactPathOption == null) {
-					taskcontext.abortExecution(new IllegalArgumentException("ArtifactPath is null."));
+				if (artifactsOption == null) {
+					taskcontext.abortExecution(new IllegalArgumentException("Artifacts is null."));
 					return null;
 				}
 				if (coordinatesOption == null) {
 					taskcontext.abortExecution(new IllegalArgumentException("Coordinates is null."));
 					return null;
 				}
-				MavenOperationConfiguration configuration = MavenOperationConfigurationTaskOptionUtils
-						.createConfiguration(configurationOption);
-				ArtifactInstallWorkerTaskFactory task = new ArtifactInstallWorkerTaskFactory(configuration,
-						coordinatesOption, artifactPathOption);
+				NavigableMap<String, SakerPath> artifacts = ImmutableUtils.makeImmutableNavigableMap(artifactsOption);
+
+				ArtifactCoordinates coordinates = new ArtifactCoordinates(coordinatesOption.getGroupId(),
+						coordinatesOption.getArtifactId(), null, null, coordinatesOption.getVersion());
+
+				ArtifactDeployWorkerTaskFactory task = new ArtifactDeployWorkerTaskFactory(
+						MavenOperationConfigurationTaskOptionUtils.createRepositoryConfiguration(repositoryOption),
+						coordinates, artifacts);
 				TaskIdentifier taskid = task.createTaskIdentifier();
 				taskcontext.startTask(taskid, task, null);
-
 				SimpleStructuredObjectTaskResult result = new SimpleStructuredObjectTaskResult(taskid);
 				taskcontext.reportSelfTaskOutputChangeDetector(new EqualityTaskOutputChangeDetector(result));
 				return result;

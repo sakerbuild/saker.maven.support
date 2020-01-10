@@ -25,6 +25,7 @@ import java.nio.channels.FileLock;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.UUID;
 
 import saker.build.file.SakerFile;
@@ -68,6 +69,9 @@ public class ArtifactInstallWorkerTaskFactory
 
 	public ArtifactInstallWorkerTaskFactory(MavenOperationConfiguration configuration, ArtifactCoordinates coordinates,
 			SakerPath artifactPath) {
+		Objects.requireNonNull(configuration, "configuration");
+		Objects.requireNonNull(coordinates, "coordinates");
+		Objects.requireNonNull(artifactPath, "artifact path");
 		//we dont need the remote repositories, clear them.
 		this.configuration = MavenOperationConfiguration.builder(configuration).setRepositories(Collections.emptySet())
 				.build();
@@ -95,13 +99,10 @@ public class ArtifactInstallWorkerTaskFactory
 			taskcontext.abortExecution(new FileNotFoundException("Artifact not found: " + artifactPath));
 			return null;
 		}
-		Path artifactmirrorpath = null;
-		if (artifactPath != null) {
-			MirroredFileContents artifactmirrorresult = taskcontext.getTaskUtilities()
-					.mirrorFileAtPathContents(artifactPath);
-			taskcontext.reportInputFileDependency(null, artifactPath, artifactmirrorresult.getContents());
-			artifactmirrorpath = artifactmirrorresult.getPath();
-		}
+		MirroredFileContents artifactmirrorresult = taskcontext.getTaskUtilities()
+				.mirrorFileAtPathContents(artifactPath);
+		taskcontext.reportInputFileDependency(null, artifactPath, artifactmirrorresult.getContents());
+		Path artifactmirrorpath = artifactmirrorresult.getPath();
 
 		MavenOperationConfiguration config = this.configuration;
 
@@ -133,12 +134,10 @@ public class ArtifactInstallWorkerTaskFactory
 
 				InstallRequest request = new InstallRequest();
 				Artifact artifact = null;
-				if (artifactmirrorpath != null) {
-					artifact = new DefaultArtifact(coordinates.getGroupId(), coordinates.getArtifactId(),
-							coordinates.getClassifier(), coordinates.getExtension(), coordinates.getVersion())
-									.setFile(artifactmirrorpath.toFile());
-					request.addArtifact(artifact);
-				}
+				artifact = new DefaultArtifact(coordinates.getGroupId(), coordinates.getArtifactId(),
+						coordinates.getClassifier(), coordinates.getExtension(), coordinates.getVersion())
+								.setFile(artifactmirrorpath.toFile());
+				request.addArtifact(artifact);
 
 				reposystem.install(reposession, request);
 
