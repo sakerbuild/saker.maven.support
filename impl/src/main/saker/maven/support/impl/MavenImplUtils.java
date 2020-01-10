@@ -148,9 +148,11 @@ public class MavenImplUtils {
 			MavenOperationConfiguration config) {
 		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
 
-		//clear the properties as the system properties shouldn't affect the session.
-		session.setSystemProperties(Collections.emptyMap());
-		session.setConfigProperties(Collections.emptyMap());
+		// clear the properties as the system properties shouldn't affect the session.
+		//TODO somehow ensure that only the repository session is not modified by system properties
+		//the clearing is currenlty removed, as thta causes the dependency resolution to fail somewhy.
+//		session.setSystemProperties(Collections.emptyMap());
+//		session.setConfigProperties(Collections.emptyMap());
 
 		//don't use pom repositories
 		session.setIgnoreArtifactDescriptorRepositories(true);
