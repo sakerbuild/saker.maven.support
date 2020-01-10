@@ -49,8 +49,7 @@ public class MavenOperationConfigurationTaskOptionUtils {
 				AuthenticationTaskOption authtasktoption = repooptions.getAuthentication();
 				AuthenticationConfiguration auth;
 				if (authtasktoption != null) {
-					auth = new AccountAuthenticationConfiguration(authtasktoption.getUserName(),
-							authtasktoption.getPassword());
+					auth = authtasktoption.create();
 				} else {
 					auth = null;
 				}

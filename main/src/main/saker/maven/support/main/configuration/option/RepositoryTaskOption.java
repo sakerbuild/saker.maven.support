@@ -58,4 +58,6 @@ public interface RepositoryTaskOption {
 	public RepositoryPolicyTaskOption getReleases();
 
 	public AuthenticationTaskOption getAuthentication();
+	
+	//TODO handle RepositoryConfiguration
 }
