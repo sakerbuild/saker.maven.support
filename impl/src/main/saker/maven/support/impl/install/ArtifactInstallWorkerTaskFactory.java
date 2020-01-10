@@ -16,7 +16,6 @@
 package saker.maven.support.impl.install;
 
 import java.io.Externalizable;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -52,14 +51,14 @@ import saker.maven.support.thirdparty.org.eclipse.aether.installation.InstallReq
 import saker.maven.support.thirdparty.org.eclipse.aether.repository.LocalRepository;
 import saker.maven.support.thirdparty.org.eclipse.aether.repository.LocalRepositoryManager;
 
-public class ArtifactInstallWorkerTaskFactory implements TaskFactory<ArtifactInstallWorkerTaskOutput>,
-		Task<ArtifactInstallWorkerTaskOutput>, Externalizable, TaskIdentifier {
+public class ArtifactInstallWorkerTaskFactory
+		implements TaskFactory<ArtifactInstallWorkerTaskOutput>, Task<ArtifactInstallWorkerTaskOutput>, Externalizable {
 
 	private static final long serialVersionUID = 1L;
 
 	protected MavenOperationConfiguration configuration;
-	protected SakerPath artifactPath;
 	protected ArtifactCoordinates coordinates;
+	protected SakerPath artifactPath;
 
 	/**
 	 * For {@link Externalizable}.
@@ -67,13 +66,17 @@ public class ArtifactInstallWorkerTaskFactory implements TaskFactory<ArtifactIns
 	public ArtifactInstallWorkerTaskFactory() {
 	}
 
-	public ArtifactInstallWorkerTaskFactory(MavenOperationConfiguration configuration, SakerPath artifactPath,
-			ArtifactCoordinates coordinates) {
+	public ArtifactInstallWorkerTaskFactory(MavenOperationConfiguration configuration, ArtifactCoordinates coordinates,
+			SakerPath artifactPath) {
 		//we dont need the remote repositories, clear them.
 		this.configuration = MavenOperationConfiguration.builder(configuration).setRepositories(Collections.emptySet())
 				.build();
-		this.artifactPath = artifactPath;
 		this.coordinates = coordinates;
+		this.artifactPath = artifactPath;
+	}
+
+	public TaskIdentifier createTaskIdentifier() {
+		return new ArtifactInstallWorkerTaskIdentifier(configuration, coordinates);
 	}
 
 	@Override
@@ -85,16 +88,20 @@ public class ArtifactInstallWorkerTaskFactory implements TaskFactory<ArtifactIns
 	@SuppressWarnings("try")
 	@Override
 	public ArtifactInstallWorkerTaskOutput run(TaskContext taskcontext) throws Exception {
-		SakerFile artifactfile = taskcontext.getTaskUtilities().resolveFileAtPath(artifactPath);
+		SakerFile artifactfile = artifactPath == null ? null
+				: taskcontext.getTaskUtilities().resolveFileAtPath(artifactPath);
 		if (artifactfile == null) {
 			taskcontext.reportInputFileDependency(null, artifactPath, CommonTaskContentDescriptors.IS_NOT_FILE);
-			taskcontext.abortExecution(new FileNotFoundException(artifactPath.toString()));
+			taskcontext.abortExecution(new FileNotFoundException("Artifact not found: " + artifactPath));
 			return null;
 		}
-		MirroredFileContents artifactmirrorresult = taskcontext.getTaskUtilities()
-				.mirrorFileAtPathContents(artifactPath);
-		taskcontext.reportInputFileDependency(null, artifactPath, artifactmirrorresult.getContents());
-		Path mirrorpath = artifactmirrorresult.getPath();
+		Path artifactmirrorpath = null;
+		if (artifactPath != null) {
+			MirroredFileContents artifactmirrorresult = taskcontext.getTaskUtilities()
+					.mirrorFileAtPathContents(artifactPath);
+			taskcontext.reportInputFileDependency(null, artifactPath, artifactmirrorresult.getContents());
+			artifactmirrorpath = artifactmirrorresult.getPath();
+		}
 
 		MavenOperationConfiguration config = this.configuration;
 
@@ -118,46 +125,48 @@ public class ArtifactInstallWorkerTaskFactory implements TaskFactory<ArtifactIns
 
 		reposession.setReadOnly();
 
-		SakerPath installresultpath;
+		SakerPath installresultartifactpath = null;
 		synchronized (MavenImplUtils.getLocalRepositoryAccessSyncLock(lockfilepath)) {
 			try (FileChannel lockchannel = FileChannel.open(lockfilelocalpath, StandardOpenOption.CREATE,
 					StandardOpenOption.WRITE);
 					FileLock lock = lockchannel.lock(0, Long.MAX_VALUE, false)) {
 
 				InstallRequest request = new InstallRequest();
-				Artifact artifact = new DefaultArtifact(coordinates.getGroupId(), coordinates.getArtifactId(),
-						coordinates.getClassifier(), coordinates.getExtension(), coordinates.getVersion())
-								.setFile(mirrorpath.toFile());
-				System.out.println("ArtifactInstallWorkerTaskFactory.run() " + artifact);
-				System.out.println("ArtifactInstallWorkerTaskFactory.run() " + artifact.getFile());
-				request.addArtifact(artifact);
+				Artifact artifact = null;
+				if (artifactmirrorpath != null) {
+					artifact = new DefaultArtifact(coordinates.getGroupId(), coordinates.getArtifactId(),
+							coordinates.getClassifier(), coordinates.getExtension(), coordinates.getVersion())
+									.setFile(artifactmirrorpath.toFile());
+					request.addArtifact(artifact);
+				}
 
 				reposystem.install(reposession, request);
 
-				String localpath = reposession.getLocalRepositoryManager().getPathForLocalArtifact(artifact);
-				System.out.println("local path: "
-						+ new File(reposession.getLocalRepositoryManager().getRepository().getBasedir(), localpath));
-				installresultpath = repositorybasedir.resolve(localpath);
-				taskcontext.getTaskUtilities().getReportExecutionDependency(
-						new ArtifactContentDescriptorExecutionProperty(UUID.randomUUID(), installresultpath));
+				UUID cduniqueness = UUID.randomUUID();
+				if (artifact != null) {
+					String localpath = reposession.getLocalRepositoryManager().getPathForLocalArtifact(artifact);
+					installresultartifactpath = repositorybasedir.resolve(localpath);
+					taskcontext.getTaskUtilities().getReportExecutionDependency(
+							new ArtifactContentDescriptorExecutionProperty(cduniqueness, installresultartifactpath));
+				}
 			}
 		}
 
-		return new ArtifactInstallWorkerTaskOutputImpl(coordinates, installresultpath);
+		return new ArtifactInstallWorkerTaskOutputImpl(coordinates, installresultartifactpath);
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(configuration);
-		out.writeObject(artifactPath);
 		out.writeObject(coordinates);
+		out.writeObject(artifactPath);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		configuration = (MavenOperationConfiguration) in.readObject();
-		artifactPath = (SakerPath) in.readObject();
 		coordinates = (ArtifactCoordinates) in.readObject();
+		artifactPath = (SakerPath) in.readObject();
 	}
 
 	@Override
@@ -215,24 +224,26 @@ public class ArtifactInstallWorkerTaskFactory implements TaskFactory<ArtifactIns
 			this.artifactLocalPath = artifactLocalPath;
 		}
 
+		@Override
 		public SakerPath getArtifactLocalPath() {
 			return artifactLocalPath;
 		}
 
+		@Override
 		public ArtifactCoordinates getCoordinates() {
 			return coordinates;
 		}
 
 		@Override
 		public void writeExternal(ObjectOutput out) throws IOException {
-			out.writeObject(artifactLocalPath);
 			out.writeObject(coordinates);
+			out.writeObject(artifactLocalPath);
 		}
 
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-			artifactLocalPath = (SakerPath) in.readObject();
 			coordinates = (ArtifactCoordinates) in.readObject();
+			artifactLocalPath = (SakerPath) in.readObject();
 		}
 
 		@Override

@@ -19,8 +19,12 @@ import saker.build.file.path.SakerPath;
 import saker.build.runtime.execution.ExecutionContext;
 import saker.build.task.ParameterizableTask;
 import saker.build.task.TaskContext;
+import saker.build.task.identifier.TaskIdentifier;
+import saker.build.task.utils.SimpleStructuredObjectTaskResult;
 import saker.build.task.utils.annot.SakerInput;
+import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
 import saker.maven.support.api.ArtifactCoordinates;
+import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.impl.install.ArtifactInstallWorkerTaskFactory;
 import saker.maven.support.main.configuration.option.MavenConfigurationTaskOption;
 import saker.nest.utils.FrontendTaskFactory;
@@ -31,24 +35,35 @@ public class InstallArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 
 	@Override
 	public ParameterizableTask<? extends Object> createTask(ExecutionContext executioncontext) {
-		// TODO Auto-generated method stub
 		return new ParameterizableTask<Object>() {
 
-			@SakerInput("ArtifactPath")
-			public SakerPath artifactPath;
-			@SakerInput("Coordinates")
-			public ArtifactCoordinates coordinates;
+			@SakerInput(value = { "ArtifactPath" }, required = true)
+			public SakerPath artifactPathOption;
+			@SakerInput(value = { "Coordinates" }, required = true)
+			public ArtifactCoordinates coordinatesOption;
 
 			@SakerInput(value = { "Configuration" })
-			public MavenConfigurationTaskOption configuration;
+			public MavenConfigurationTaskOption configurationOption;
 
 			@Override
 			public Object run(TaskContext taskcontext) throws Exception {
-				// TODO Auto-generated method stub
-				ArtifactInstallWorkerTaskFactory task = new ArtifactInstallWorkerTaskFactory(
-						configuration.createConfiguration(), artifactPath, coordinates);
-				taskcontext.startTask(task, task, null);
-				return null;
+				if (artifactPathOption == null) {
+					taskcontext.abortExecution(new IllegalArgumentException("ArtifactPath is null."));
+					return null;
+				}
+				if (coordinatesOption == null) {
+					taskcontext.abortExecution(new IllegalArgumentException("Coordinates is null."));
+					return null;
+				}
+				MavenOperationConfiguration configuration = configurationOption.createConfiguration();
+				ArtifactInstallWorkerTaskFactory task = new ArtifactInstallWorkerTaskFactory(configuration,
+						coordinatesOption, artifactPathOption);
+				TaskIdentifier taskid = task.createTaskIdentifier();
+				taskcontext.startTask(taskid, task, null);
+
+				SimpleStructuredObjectTaskResult result = new SimpleStructuredObjectTaskResult(taskid);
+				taskcontext.reportSelfTaskOutputChangeDetector(new EqualityTaskOutputChangeDetector(result));
+				return result;
 			}
 		};
 	}

@@ -15,6 +15,11 @@
  */
 package saker.maven.support.api.install;
 
-public interface ArtifactInstallWorkerTaskOutput {
+import saker.build.file.path.SakerPath;
+import saker.maven.support.api.ArtifactCoordinates;
 
+public interface ArtifactInstallWorkerTaskOutput {
+	public SakerPath getArtifactLocalPath();
+
+	public ArtifactCoordinates getCoordinates();
 }
