@@ -26,6 +26,7 @@ import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.AuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.PrivateKeyAuthenticationConfiguration;
 import saker.maven.support.main.TaskDocs.DocPrivateKeyAuthenticationConfiguration;
+import saker.maven.support.main.TaskDocs.DocPrivateKeyLocalPath;
 import saker.nest.scriptinfo.reflection.annot.NestInformation;
 import saker.nest.scriptinfo.reflection.annot.NestParameterInformation;
 import saker.nest.scriptinfo.reflection.annot.NestTaskInformation;
@@ -41,7 +42,7 @@ import saker.nest.utils.FrontendTaskFactory;
 @NestParameterInformation(value = "KeyLocalPath",
 		aliases = { "PrivateKeyLocalPath" },
 		required = true,
-		type = @NestTypeUsage(SakerPath.class),
+		type = @NestTypeUsage(DocPrivateKeyLocalPath.class),
 		info = @NestInformation("The local file system path to the private key store."))
 @NestParameterInformation(value = "Passphrase",
 		aliases = { "Password" },

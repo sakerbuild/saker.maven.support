@@ -131,7 +131,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 				try (FileChannel lockchannel = FileChannel.open(lockfilelocalpath, StandardOpenOption.CREATE,
 						StandardOpenOption.WRITE);
 						FileLock lock = lockchannel.lock(0, Long.MAX_VALUE, false)) {
-					//taskcontext.invalidate() is called on the download locations by the repository listener
+					//taskcontext.invalidate() is called on the localize locations by the repository listener
 
 					List<ArtifactResult> resolvedartifacts;
 					try {

@@ -93,13 +93,13 @@ public final class ArtifactCoordinates implements Externalizable {
 		Objects.requireNonNull(artifactId, "artifact id");
 		Objects.requireNonNull(version, "version");
 		if ("".equals(groupId)) {
-			throw new IllegalArgumentException("Group ID is empty string.");
+			throw new IllegalArgumentException("Group ID is empty.");
 		}
 		if ("".equals(artifactId)) {
-			throw new IllegalArgumentException("Artifact ID is empty string.");
+			throw new IllegalArgumentException("Artifact ID is empty.");
 		}
 		if ("".equals(version)) {
-			throw new IllegalArgumentException("Version is empty string.");
+			throw new IllegalArgumentException("Version is empty.");
 		}
 		if ("".equals(classifier)) {
 			classifier = null;

@@ -16,18 +16,23 @@
 package saker.maven.support.impl;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import saker.build.file.SakerFile;
 import saker.build.file.path.SakerPath;
 import saker.build.file.provider.LocalFileProvider;
 import saker.build.runtime.execution.SakerLog;
 import saker.build.task.TaskContext;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.util.property.SystemPropertyEnvironmentProperty;
+import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.AccountAuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.AuthenticationConfiguration;
@@ -35,7 +40,17 @@ import saker.maven.support.api.MavenOperationConfiguration.PrivateKeyAuthenticat
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryPolicyConfiguration;
 import saker.maven.support.impl.dependency.option.ExclusionOption;
+import saker.maven.support.thirdparty.org.apache.maven.model.Model;
+import saker.maven.support.thirdparty.org.apache.maven.model.building.DefaultModelBuildingRequest;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuilder;
+import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuildingException;
+import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuildingRequest;
+import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuildingResult;
+import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelProblemCollector;
+import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelSource2;
+import saker.maven.support.thirdparty.org.apache.maven.model.locator.DefaultModelLocator;
+import saker.maven.support.thirdparty.org.apache.maven.model.locator.ModelLocator;
+import saker.maven.support.thirdparty.org.apache.maven.model.validation.ModelValidator;
 import saker.maven.support.thirdparty.org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import saker.maven.support.thirdparty.org.eclipse.aether.AbstractRepositoryListener;
 import saker.maven.support.thirdparty.org.eclipse.aether.DefaultRepositorySystemSession;
@@ -51,7 +66,11 @@ import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.Repositor
 import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.checksum.ChecksumPolicy;
 import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.checksum.ChecksumPolicyProvider;
 import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.transport.TransporterFactory;
+import saker.maven.support.thirdparty.org.eclipse.aether.spi.log.LoggerFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.transfer.ChecksumFailureException;
+import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferCancelledException;
+import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferEvent;
+import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferListener;
 import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferResource;
 import saker.maven.support.thirdparty.org.eclipse.aether.transport.file.FileTransporterFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.transport.http.HttpTransporterFactory;
@@ -115,11 +134,16 @@ public class MavenImplUtils {
 		serviceLocator.addService(TransporterFactory.class, HttpTransporterFactory.class);
 		serviceLocator.setService(ModelBuilder.class, BugFixModelBuilder.class);
 		serviceLocator.setServices(ChecksumPolicyProvider.class, new SupportChecksumPolicyProvider());
+		serviceLocator.setServices(LoggerFactory.class);
 
 		serviceLocator.setErrorHandler(new SneakyThrowingErrorHandler());
 		return serviceLocator;
 	}
 
+	/**
+	 * @param config
+	 *            May be <code>null</code>. In that case properties related to it are not set.
+	 */
 	public static DefaultRepositorySystemSession createNewSession(TaskContext taskcontext,
 			MavenOperationConfiguration config) {
 		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
@@ -159,41 +183,51 @@ public class MavenImplUtils {
 			return Collections.singletonList(getMavenCentralRemoteRepository());
 		}
 		Set<? extends RepositoryConfiguration> repos = config.getRepositories();
+		return createRemoteRepositories(repos);
+	}
+
+	public static List<RemoteRepository> createRemoteRepositories(Set<? extends RepositoryConfiguration> repos) {
 		if (repos == null) {
 			return Collections.singletonList(getMavenCentralRemoteRepository());
 		}
 		List<RemoteRepository> result = new ArrayList<>();
 		for (RepositoryConfiguration repoconfig : repos) {
-			//XXX other configurations 
-			RemoteRepository.Builder builder = new RemoteRepository.Builder(repoconfig.getId(), repoconfig.getLayout(),
-					repoconfig.getUrl());
-
-			builder.setReleasePolicy(toRepositoryPolicy(repoconfig.getReleasePolicy()));
-			builder.setSnapshotPolicy(toRepositoryPolicy(repoconfig.getSnapshotPolicy()));
-
-			AuthenticationConfiguration auth = repoconfig.getAuthentication();
-			if (auth != null) {
-				auth.accept(new AuthenticationConfiguration.Visitor() {
-					@Override
-					public void visit(AccountAuthenticationConfiguration config) {
-						AuthenticationBuilder authbuilder = new AuthenticationBuilder();
-						authbuilder.addUsername(config.getUserName());
-						authbuilder.addPassword(config.getPassword());
-						builder.setAuthentication(authbuilder.build());
-					}
-
-					@Override
-					public void visit(PrivateKeyAuthenticationConfiguration config) {
-						AuthenticationBuilder authbuilder = new AuthenticationBuilder();
-						authbuilder.addPrivateKey(config.getKeyLocalPath().toString(), config.getPassPhrase());
-						builder.setAuthentication(authbuilder.build());
-					}
-				});
-			}
-
-			result.add(builder.build());
+			RemoteRepository remoterepo = createRemoteRepository(repoconfig);
+			result.add(remoterepo);
 		}
 		return result;
+	}
+
+	public static RemoteRepository createRemoteRepository(RepositoryConfiguration repoconfig) {
+		//XXX other configurations 
+		RemoteRepository.Builder builder = new RemoteRepository.Builder(repoconfig.getId(), repoconfig.getLayout(),
+				repoconfig.getUrl());
+
+		builder.setReleasePolicy(toRepositoryPolicy(repoconfig.getReleasePolicy()));
+		builder.setSnapshotPolicy(toRepositoryPolicy(repoconfig.getSnapshotPolicy()));
+
+		AuthenticationConfiguration auth = repoconfig.getAuthentication();
+		if (auth != null) {
+			auth.accept(new AuthenticationConfiguration.Visitor() {
+				@Override
+				public void visit(AccountAuthenticationConfiguration config) {
+					AuthenticationBuilder authbuilder = new AuthenticationBuilder();
+					authbuilder.addUsername(config.getUserName());
+					authbuilder.addPassword(config.getPassword());
+					builder.setAuthentication(authbuilder.build());
+				}
+
+				@Override
+				public void visit(PrivateKeyAuthenticationConfiguration config) {
+					AuthenticationBuilder authbuilder = new AuthenticationBuilder();
+					authbuilder.addPrivateKey(config.getKeyLocalPath().toString(), config.getPassPhrase());
+					builder.setAuthentication(authbuilder.build());
+				}
+			});
+		}
+
+		RemoteRepository remoterepo = builder.build();
+		return remoterepo;
 	}
 
 	private static RepositoryPolicy toRepositoryPolicy(RepositoryPolicyConfiguration policyconfig) {
@@ -233,6 +267,97 @@ public class MavenImplUtils {
 				taskcontext.invalidate(LocalFileProvider.getPathKeyStatic(SakerPath.valueOf(file.getAbsolutePath())));
 			}
 		}
+
+		@Override
+		public void artifactInstalled(RepositoryEvent event) {
+			File file = event.getFile();
+			if (file != null) {
+				taskcontext.invalidate(LocalFileProvider.getPathKeyStatic(SakerPath.valueOf(file.getAbsolutePath())));
+			}
+		}
+	}
+
+	public static ArtifactCoordinates getArtifactCoordinatesFromPom(SakerFile pomfile) throws ModelBuildingException {
+		DefaultModelBuildingRequest modelbuildrequest = new DefaultModelBuildingRequest()
+				.setModelSource(new ModelSource2() {
+					@Override
+					public String getLocation() {
+						return pomfile.getSakerPath().toString();
+					}
+
+					@Override
+					public InputStream getInputStream() throws IOException {
+						return pomfile.openInputStream();
+					}
+
+					@Override
+					public ModelSource2 getRelatedSource(String relpath) {
+						// not interested
+						return null;
+					}
+
+					@Override
+					public URI getLocationURI() {
+						throw new AssertionError("Internal error: ModelSource2.getLocationURI() is unsupported.");
+					}
+				}).setModelResolver(null);
+		ModelBuilder modelbuilder = new BugFixDefaultModelBuilderFactory() {
+			@Override
+			protected ModelLocator newModelLocator() {
+				return new DefaultModelLocator() {
+					@Override
+					public File locatePom(File projectDirectory) {
+						throw new UnsupportedOperationException(
+								"Internal error: ModelLocator.locatePom(File) is unsupported.");
+					}
+				};
+			}
+
+			@Override
+			protected ModelValidator newModelValidator() {
+				return new ModelValidator() {
+					@Override
+					public void validateRawModel(Model model, ModelBuildingRequest arg1, ModelProblemCollector arg2) {
+						clearModelForArtifactCoordinateDetermination(model);
+					}
+
+					@Override
+					public void validateEffectiveModel(Model model, ModelBuildingRequest arg1,
+							ModelProblemCollector arg2) {
+						clearModelForArtifactCoordinateDetermination(model);
+					}
+				};
+			}
+		}.newInstance();
+
+		ModelBuildingResult modelbuildresult = modelbuilder.build(modelbuildrequest);
+		Model effectivemodel = modelbuildresult.getEffectiveModel();
+		//jar default extension as specified in packaging section of https://maven.apache.org/pom.html
+		return new ArtifactCoordinates(effectivemodel.getGroupId(), effectivemodel.getArtifactId(), null,
+				ObjectUtils.nullDefault(effectivemodel.getPackaging(), "jar"), effectivemodel.getVersion());
+	}
+
+	private static void clearModelForArtifactCoordinateDetermination(Model model) {
+		model.setParent(null);
+
+		model.getDependencies().clear();
+		model.getContributors().clear();
+		model.getDevelopers().clear();
+		model.getLicenses().clear();
+		model.getMailingLists().clear();
+		model.getPluginRepositories().clear();
+		model.getProfiles().clear();
+		model.getRepositories().clear();
+		model.getModules().clear();
+		model.setCiManagement(null);
+		model.setDependencyManagement(null);
+		model.setDescription(null);
+		model.setDistributionManagement(null);
+		model.setIssueManagement(null);
+		model.setOrganization(null);
+		model.setScm(null);
+		model.setReporting(null);
+		model.setProperties(null);
 	}
 
 	public static final class SupportChecksumPolicyProvider implements ChecksumPolicyProvider {

@@ -20,6 +20,7 @@ import java.util.Collection;
 import saker.build.file.path.SakerPath;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.impl.MavenImplUtils;
+import saker.maven.support.main.TaskDocs.DocLocalRepositoryPath;
 import saker.nest.scriptinfo.reflection.annot.NestFieldInformation;
 import saker.nest.scriptinfo.reflection.annot.NestInformation;
 import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
@@ -28,7 +29,7 @@ import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 		+ "The configuration contains options for defining the LocalRepositoryPath, and the remote "
 		+ "Repositories to work with.")
 @NestFieldInformation(value = "LocalRepositoryPath",
-		type = @NestTypeUsage(SakerPath.class),
+		type = @NestTypeUsage(DocLocalRepositoryPath.class),
 		info = @NestInformation("Specifies the path on the local file system that should be used as the local repository of artifacts.\n"
 				+ "The local repository serves as a cache for remote artifacts, and a local storage of private artifacts.\n"
 				+ "If not specified, {user.home}/.m2/repository is used."))

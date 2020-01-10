@@ -791,8 +791,8 @@ public final class MavenOperationConfiguration implements Externalizable {
 
 	private static final MavenOperationConfiguration DEFAULTS_INSTANCE = new MavenOperationConfiguration();
 
-	private SakerPath localRepositoryPath;
-	private Set<RepositoryConfiguration> repositories;
+	protected SakerPath localRepositoryPath;
+	protected Set<RepositoryConfiguration> repositories;
 
 	/**
 	 * For {@link Externalizable}.
@@ -879,6 +879,20 @@ public final class MavenOperationConfiguration implements Externalizable {
 	}
 
 	/**
+	 * Creates a new build that is initialized with the values from the argument.
+	 * 
+	 * @param copy
+	 *            The configuration to copy.
+	 * @return The builder.
+	 * @throws NullPointerException
+	 *             If the argument is <code>null</code>.
+	 */
+	public static Builder builder(MavenOperationConfiguration copy) throws NullPointerException {
+		Objects.requireNonNull(copy, "configuration");
+		return new Builder(copy);
+	}
+
+	/**
 	 * Gets the Maven operation configuration that causes the operation to use the defaults.
 	 * <p>
 	 * See the default values in the associated getter method.
@@ -899,6 +913,11 @@ public final class MavenOperationConfiguration implements Externalizable {
 		private Set<RepositoryConfiguration> repositories;
 
 		protected Builder() {
+		}
+
+		protected Builder(MavenOperationConfiguration copy) {
+			this.localRepositoryPath = copy.localRepositoryPath;
+			this.repositories = copy.repositories;
 		}
 
 		/**

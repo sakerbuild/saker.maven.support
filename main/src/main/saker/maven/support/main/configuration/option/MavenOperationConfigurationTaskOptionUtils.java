@@ -42,24 +42,29 @@ public class MavenOperationConfigurationTaskOptionUtils {
 		if (repos != null) {
 			Set<RepositoryConfiguration> repoconfigs = new LinkedHashSet<>();
 			for (RepositoryTaskOption repooptions : repos) {
-				RepositoryPolicyConfiguration snapshotpolicy = createRepositoryPolicyConfig(repooptions.getSnapshots());
-				RepositoryPolicyConfiguration releasepolicy = createRepositoryPolicyConfig(repooptions.getReleases());
-
-				AuthenticationTaskOption authtasktoption = repooptions.getAuthentication();
-				AuthenticationConfiguration auth;
-				if (authtasktoption != null) {
-					auth = authtasktoption.create();
-				} else {
-					auth = null;
-				}
-
-				RepositoryConfiguration repoconfig = new RepositoryConfiguration(repooptions.getId(),
-						repooptions.getLayout(), repooptions.getUrl(), snapshotpolicy, releasepolicy, auth);
+				RepositoryConfiguration repoconfig = createRepositoryConfiguration(repooptions);
 				repoconfigs.add(repoconfig);
 			}
 			builder.setRepositories(repoconfigs);
 		}
 		return builder.build();
+	}
+
+	public static RepositoryConfiguration createRepositoryConfiguration(RepositoryTaskOption repooptions) {
+		RepositoryPolicyConfiguration snapshotpolicy = createRepositoryPolicyConfig(repooptions.getSnapshots());
+		RepositoryPolicyConfiguration releasepolicy = createRepositoryPolicyConfig(repooptions.getReleases());
+
+		AuthenticationTaskOption authtasktoption = repooptions.getAuthentication();
+		AuthenticationConfiguration auth;
+		if (authtasktoption != null) {
+			auth = authtasktoption.create();
+		} else {
+			auth = null;
+		}
+
+		RepositoryConfiguration repoconfig = new RepositoryConfiguration(repooptions.getId(), repooptions.getLayout(),
+				repooptions.getUrl(), snapshotpolicy, releasepolicy, auth);
+		return repoconfig;
 	}
 
 	private static final Set<String> ALLOWED_CHECKSUM_POLICIES = ImmutableUtils
