@@ -13,7 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package saker.maven.support.api;
+package saker.maven.support.api.deploy;
+
+import saker.maven.support.api.ArtifactCoordinates;
 
 public interface ArtifactDeployWorkerTaskOutput {
 	public ArtifactCoordinates getCoordinates();
