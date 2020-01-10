@@ -251,6 +251,8 @@ public final class MavenOperationConfiguration implements Externalizable {
 		private RepositoryPolicyConfiguration snapshotPolicy;
 		private RepositoryPolicyConfiguration releasePolicy;
 
+		private AuthenticationConfiguration authentication;
+
 		/**
 		 * For {@link Externalizable}.
 		 * 
@@ -293,21 +295,47 @@ public final class MavenOperationConfiguration implements Externalizable {
 		 * @param url
 		 *            The repository URL.
 		 * @param snapshotPolicy
-		 *            The snapshot policy.
+		 *            The snapshot policy. May be <code>null</code>.
 		 * @param releasePolicy
-		 *            The release policy.
+		 *            The release policy. May be <code>null</code>.
 		 * @throws NullPointerException
 		 *             If the URL is <code>null</code>.
 		 */
 		public RepositoryConfiguration(String id, String layout, String url,
 				RepositoryPolicyConfiguration snapshotPolicy, RepositoryPolicyConfiguration releasePolicy)
 				throws NullPointerException {
+			this(id, layout, url, snapshotPolicy, releasePolicy, null);
+		}
+
+		/**
+		 * Creates a new configuration with the specified properties.
+		 * 
+		 * @param id
+		 *            The repository ID.
+		 * @param layout
+		 *            The repository layout type. Either <code>"default"</code> or <code>"legacy"</code>. If
+		 *            <code>null</code>, it will be set to <code>"default"</code>.
+		 * @param url
+		 *            The repository URL.
+		 * @param snapshotPolicy
+		 *            The snapshot policy. May be <code>null</code>.
+		 * @param releasePolicy
+		 *            The release policy. May be <code>null</code>.
+		 * @param auth
+		 *            The authentication configuration. May be <code>null</code>.
+		 * @throws NullPointerException
+		 *             If the URL is <code>null</code>.
+		 */
+		public RepositoryConfiguration(String id, String layout, String url,
+				RepositoryPolicyConfiguration snapshotPolicy, RepositoryPolicyConfiguration releasePolicy,
+				AuthenticationConfiguration auth) throws NullPointerException {
 			Objects.requireNonNull(url, "Maven repository URL");
 			this.id = id;
 			this.layout = layout == null ? "default" : layout;
 			this.url = url;
 			this.snapshotPolicy = snapshotPolicy;
 			this.releasePolicy = releasePolicy;
+			this.authentication = auth;
 		}
 
 		/**
@@ -381,7 +409,7 @@ public final class MavenOperationConfiguration implements Externalizable {
 			return releasePolicy;
 		}
 
-		//for compatibility with MavenConfigurationTaskOption
+		//for compatibility with RepositoryTaskOption
 		/**
 		 * @see #getSnapshotPolicy()
 		 */
@@ -389,12 +417,22 @@ public final class MavenOperationConfiguration implements Externalizable {
 			return snapshotPolicy;
 		}
 
-		//for compatibility with MavenConfigurationTaskOption
+		//for compatibility with RepositoryTaskOption
 		/**
 		 * @see #getReleasePolicy()
 		 */
 		public RepositoryPolicyConfiguration getReleases() {
 			return releasePolicy;
+		}
+
+		/**
+		 * Gets the authentication configuration.
+		 * 
+		 * @return The authentication configuration or <code>null</code> if not set.
+		 */
+		//keep same name as in RepositoryTaskOption
+		public AuthenticationConfiguration getAuthentication() {
+			return authentication;
 		}
 
 		@Override
@@ -404,6 +442,7 @@ public final class MavenOperationConfiguration implements Externalizable {
 			out.writeObject(url);
 			out.writeObject(snapshotPolicy);
 			out.writeObject(releasePolicy);
+			out.writeObject(authentication);
 		}
 
 		@Override
@@ -413,6 +452,7 @@ public final class MavenOperationConfiguration implements Externalizable {
 			url = (String) in.readObject();
 			snapshotPolicy = (RepositoryPolicyConfiguration) in.readObject();
 			releasePolicy = (RepositoryPolicyConfiguration) in.readObject();
+			authentication = (AuthenticationConfiguration) in.readObject();
 		}
 
 		@Override
@@ -429,10 +469,20 @@ public final class MavenOperationConfiguration implements Externalizable {
 			if (getClass() != obj.getClass())
 				return false;
 			RepositoryConfiguration other = (RepositoryConfiguration) obj;
+			if (authentication == null) {
+				if (other.authentication != null)
+					return false;
+			} else if (!authentication.equals(other.authentication))
+				return false;
 			if (id == null) {
 				if (other.id != null)
 					return false;
 			} else if (!id.equals(other.id))
+				return false;
+			if (layout == null) {
+				if (other.layout != null)
+					return false;
+			} else if (!layout.equals(other.layout))
 				return false;
 			if (releasePolicy == null) {
 				if (other.releasePolicy != null)
@@ -443,11 +493,6 @@ public final class MavenOperationConfiguration implements Externalizable {
 				if (other.snapshotPolicy != null)
 					return false;
 			} else if (!snapshotPolicy.equals(other.snapshotPolicy))
-				return false;
-			if (layout == null) {
-				if (other.layout != null)
-					return false;
-			} else if (!layout.equals(other.layout))
 				return false;
 			if (url == null) {
 				if (other.url != null)
@@ -462,9 +507,106 @@ public final class MavenOperationConfiguration implements Externalizable {
 			return getClass().getSimpleName() + "[" + (id != null ? "id=" + id + ", " : "")
 					+ (layout != null ? "layout=" + layout + ", " : "") + (url != null ? "url=" + url + ", " : "")
 					+ (snapshotPolicy != null ? "snapshotPolicy=" + snapshotPolicy + ", " : "")
-					+ (releasePolicy != null ? "releasePolicy=" + releasePolicy : "") + "]";
+					+ (releasePolicy != null ? "releasePolicy=" + releasePolicy + ", " : "")
+					+ (authentication != null ? "authentication=" + authentication : "") + "]";
 		}
 
+	}
+
+	public static abstract class AuthenticationConfiguration {
+		public interface Visitor {
+			public void visit(AccountAuthenticationConfiguration config);
+		}
+
+		AuthenticationConfiguration() {
+		}
+
+		public abstract void accept(Visitor visitor);
+	}
+
+	public static final class AccountAuthenticationConfiguration extends AuthenticationConfiguration
+			implements Externalizable {
+		private static final long serialVersionUID = 1L;
+
+		private String userName;
+		private String password;
+
+		/**
+		 * For {@link Externalizable}.
+		 * 
+		 * @deprecated Use {@link #AccountAuthenticationConfiguration(String, String)}
+		 */
+		@Deprecated
+		public AccountAuthenticationConfiguration() {
+		}
+
+		public AccountAuthenticationConfiguration(String userName, String password) {
+			Objects.requireNonNull(userName, "username");
+			Objects.requireNonNull(password, "password");
+			this.userName = userName;
+			this.password = password;
+		}
+
+		@Override
+		public void accept(Visitor visitor) {
+			visitor.visit(this);
+		}
+
+		public String getUserName() {
+			return userName;
+		}
+
+		public String getPassword() {
+			return password;
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(userName);
+			out.writeObject(password);
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			userName = (String) in.readObject();
+			password = (String) in.readObject();
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((userName == null) ? 0 : userName.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			AccountAuthenticationConfiguration other = (AccountAuthenticationConfiguration) obj;
+			if (password == null) {
+				if (other.password != null)
+					return false;
+			} else if (!password.equals(other.password))
+				return false;
+			if (userName == null) {
+				if (other.userName != null)
+					return false;
+			} else if (!userName.equals(other.userName))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			//don't display the password in the tostring
+			return getClass().getSimpleName() + "[userName=" + userName + "]";
+		}
 	}
 
 	private static final long serialVersionUID = 1L;

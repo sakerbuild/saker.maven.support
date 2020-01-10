@@ -24,6 +24,8 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.maven.support.api.MavenOperationConfiguration;
+import saker.maven.support.api.MavenOperationConfiguration.AccountAuthenticationConfiguration;
+import saker.maven.support.api.MavenOperationConfiguration.AuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryPolicyConfiguration;
 import saker.maven.support.thirdparty.org.eclipse.aether.repository.RepositoryPolicy;
@@ -43,8 +45,18 @@ public class MavenOperationConfigurationTaskOptionUtils {
 			for (RepositoryTaskOption repooptions : repos) {
 				RepositoryPolicyConfiguration snapshotpolicy = createRepositoryPolicyConfig(repooptions.getSnapshots());
 				RepositoryPolicyConfiguration releasepolicy = createRepositoryPolicyConfig(repooptions.getReleases());
+
+				AuthenticationTaskOption authtasktoption = repooptions.getAuthentication();
+				AuthenticationConfiguration auth;
+				if (authtasktoption != null) {
+					auth = new AccountAuthenticationConfiguration(authtasktoption.getUserName(),
+							authtasktoption.getPassword());
+				} else {
+					auth = null;
+				}
+
 				RepositoryConfiguration repoconfig = new RepositoryConfiguration(repooptions.getId(),
-						repooptions.getLayout(), repooptions.getUrl(), snapshotpolicy, releasepolicy);
+						repooptions.getLayout(), repooptions.getUrl(), snapshotpolicy, releasepolicy, auth);
 				repoconfigs.add(repoconfig);
 			}
 			builder.setRepositories(repoconfigs);
