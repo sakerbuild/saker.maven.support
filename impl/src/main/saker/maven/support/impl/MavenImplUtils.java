@@ -159,41 +159,51 @@ public class MavenImplUtils {
 			return Collections.singletonList(getMavenCentralRemoteRepository());
 		}
 		Set<? extends RepositoryConfiguration> repos = config.getRepositories();
+		return createRemoteRepositories(repos);
+	}
+
+	public static List<RemoteRepository> createRemoteRepositories(Set<? extends RepositoryConfiguration> repos) {
 		if (repos == null) {
 			return Collections.singletonList(getMavenCentralRemoteRepository());
 		}
 		List<RemoteRepository> result = new ArrayList<>();
 		for (RepositoryConfiguration repoconfig : repos) {
-			//XXX other configurations 
-			RemoteRepository.Builder builder = new RemoteRepository.Builder(repoconfig.getId(), repoconfig.getLayout(),
-					repoconfig.getUrl());
-
-			builder.setReleasePolicy(toRepositoryPolicy(repoconfig.getReleasePolicy()));
-			builder.setSnapshotPolicy(toRepositoryPolicy(repoconfig.getSnapshotPolicy()));
-
-			AuthenticationConfiguration auth = repoconfig.getAuthentication();
-			if (auth != null) {
-				auth.accept(new AuthenticationConfiguration.Visitor() {
-					@Override
-					public void visit(AccountAuthenticationConfiguration config) {
-						AuthenticationBuilder authbuilder = new AuthenticationBuilder();
-						authbuilder.addUsername(config.getUserName());
-						authbuilder.addPassword(config.getPassword());
-						builder.setAuthentication(authbuilder.build());
-					}
-
-					@Override
-					public void visit(PrivateKeyAuthenticationConfiguration config) {
-						AuthenticationBuilder authbuilder = new AuthenticationBuilder();
-						authbuilder.addPrivateKey(config.getKeyLocalPath().toString(), config.getPassPhrase());
-						builder.setAuthentication(authbuilder.build());
-					}
-				});
-			}
-
-			result.add(builder.build());
+			RemoteRepository remoterepo = createRemoteRepository(repoconfig);
+			result.add(remoterepo);
 		}
 		return result;
+	}
+
+	public static RemoteRepository createRemoteRepository(RepositoryConfiguration repoconfig) {
+		//XXX other configurations 
+		RemoteRepository.Builder builder = new RemoteRepository.Builder(repoconfig.getId(), repoconfig.getLayout(),
+				repoconfig.getUrl());
+
+		builder.setReleasePolicy(toRepositoryPolicy(repoconfig.getReleasePolicy()));
+		builder.setSnapshotPolicy(toRepositoryPolicy(repoconfig.getSnapshotPolicy()));
+
+		AuthenticationConfiguration auth = repoconfig.getAuthentication();
+		if (auth != null) {
+			auth.accept(new AuthenticationConfiguration.Visitor() {
+				@Override
+				public void visit(AccountAuthenticationConfiguration config) {
+					AuthenticationBuilder authbuilder = new AuthenticationBuilder();
+					authbuilder.addUsername(config.getUserName());
+					authbuilder.addPassword(config.getPassword());
+					builder.setAuthentication(authbuilder.build());
+				}
+
+				@Override
+				public void visit(PrivateKeyAuthenticationConfiguration config) {
+					AuthenticationBuilder authbuilder = new AuthenticationBuilder();
+					authbuilder.addPrivateKey(config.getKeyLocalPath().toString(), config.getPassPhrase());
+					builder.setAuthentication(authbuilder.build());
+				}
+			});
+		}
+
+		RemoteRepository remoterepo = builder.build();
+		return remoterepo;
 	}
 
 	private static RepositoryPolicy toRepositoryPolicy(RepositoryPolicyConfiguration policyconfig) {
@@ -228,6 +238,14 @@ public class MavenImplUtils {
 				SakerLog.log().out(taskcontext).verbose().println("Failed to download artifact: " + event.getArtifact()
 						+ " from " + event.getRepository().getId() + " (" + exc + ")");
 			}
+			File file = event.getFile();
+			if (file != null) {
+				taskcontext.invalidate(LocalFileProvider.getPathKeyStatic(SakerPath.valueOf(file.getAbsolutePath())));
+			}
+		}
+
+		@Override
+		public void artifactInstalled(RepositoryEvent event) {
 			File file = event.getFile();
 			if (file != null) {
 				taskcontext.invalidate(LocalFileProvider.getPathKeyStatic(SakerPath.valueOf(file.getAbsolutePath())));
