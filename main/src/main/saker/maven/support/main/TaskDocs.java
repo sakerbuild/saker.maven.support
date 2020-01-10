@@ -34,7 +34,7 @@ public class TaskDocs {
 	public static final String PARAM_CONFIGURATION = "Specifies the configuration to use during the operation.\n"
 			+ "The parameter can be used to specify the local repository path, and the configuration for remote repositories.\n"
 			+ "If no configuration is specified, the task will use the local repository at {user.home}/.m2/repository, and "
-			+ "the remove repository from Maven Central: " + MavenImplUtils.MAVEN_CENTRAL_REPOSITORY_URL;
+			+ "the remote repository from Maven Central: " + MavenImplUtils.MAVEN_CENTRAL_REPOSITORY_URL;
 	private static final String OUTPUT_CONFIGURATION = "The Maven configuration that was used during the operation.\n"
 			+ "This field can be passed to other Maven related tasks for their configurations.";
 
@@ -259,4 +259,58 @@ public class TaskDocs {
 	public static class DocPrivateKeyAuthenticationConfiguration {
 	}
 
+	@NestTypeInformation(qualifiedName = "saker.maven.support.api.install.ArtifactInstallWorkerTaskOutput")
+	@NestInformation("Result of a Maven artifact installation task.")
+	@NestFieldInformation(value = "ArtifactLocalPath",
+			type = @NestTypeUsage(SakerPath.class),
+			info = @NestInformation("The local path of the installed artifact.\n"
+					+ "The path is to be interpreted on the local file system and points to the location of the "
+					+ "artifact in the Maven repository to which it was installed to."))
+	@NestFieldInformation(value = "Coordinates",
+			type = @NestTypeUsage(DocArtifactCoordinates.class),
+			info = @NestInformation("The artifact coordinates of the installed artifact."))
+	public static class DocArtifactInstallWorkerTaskOutput {
+	}
+
+	@NestTypeInformation(qualifiedName = "saker.maven.support.api.deploy.ArtifactDeployWorkerTaskOutput")
+	@NestInformation("Result of a Maven artifact deployment task.")
+	@NestFieldInformation(value = "Coordinates",
+			type = @NestTypeUsage(DocArtifactCoordinates.class),
+			info = @NestInformation("The artifact coordinates of the deployed artifacts.\n"
+					+ "The coordinates doesn't contain classifier and extension."))
+	public static class DocArtifactDeployWorkerTaskOutput {
+	}
+
+	@NestTypeInformation(qualifiedName = "DeploymentSpecifier")
+	@NestInformation("Artifact deployment specifier that contains the classifier and extension for a given artifact.\n"
+			+ "The specifier is expected to be in the [<classifier>:]<extension> format.\n"
+			+ "The classifier may be omitted. If the extension is specified as empty, \"jar\" will be used as a default.\n"
+			+ "Some examples are: jar, pom, sources:jar, javadoc:jar.")
+	public static class DocDeploymentSpecifier {
+	}
+
+	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.FILE_PATH)
+	@NestInformation("Path to the Maven artifact that is being deployed.")
+	public static class DocDeployArtifactPath {
+	}
+
+	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.FILE_PATH)
+	@NestInformation("Path to the Maven artifact that is being installed.")
+	public static class DocInstallArtifactPath {
+	}
+
+	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.DIRECTORY_PATH)
+	@NestInformation("Local file system path to a Maven repository.")
+	public static class DocLocalRepositoryPath {
+	}
+
+	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.FILE_PATH)
+	@NestInformation("Execution path to a Maven pom.xml.")
+	public static class DocMavenPomPath {
+	}
+
+	@NestTypeInformation(qualifiedName = "SakerPath", kind = TypeInformationKind.FILE_PATH)
+	@NestInformation("Local file system path to a private key store that can be used to authenticate to Maven remote repositories.")
+	public static class DocPrivateKeyLocalPath {
+	}
 }

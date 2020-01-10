@@ -26,11 +26,37 @@ import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.impl.install.ArtifactInstallWorkerTaskFactory;
+import saker.maven.support.main.TaskDocs;
+import saker.maven.support.main.TaskDocs.DocArtifactCoordinates;
+import saker.maven.support.main.TaskDocs.DocArtifactInstallWorkerTaskOutput;
+import saker.maven.support.main.TaskDocs.DocInstallArtifactPath;
 import saker.maven.support.main.configuration.option.MavenConfigurationTaskOption;
 import saker.maven.support.main.configuration.option.MavenOperationConfigurationTaskOptionUtils;
+import saker.nest.scriptinfo.reflection.annot.NestInformation;
+import saker.nest.scriptinfo.reflection.annot.NestParameterInformation;
+import saker.nest.scriptinfo.reflection.annot.NestTaskInformation;
+import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 import saker.nest.utils.FrontendTaskFactory;
 
-//TODO taskdoc
+@NestTaskInformation(returnType = @NestTypeUsage(DocArtifactInstallWorkerTaskOutput.class))
+@NestInformation("Installs the specified file with the given coordinates to the local Maven repository.\n"
+		+ "The task will simply install the file as an aritfact to the local repository.\n"
+		+ "The local repository path can be configured as other saker.maven tasks. Remote repository "
+		+ "configurations are ignored.")
+
+@NestParameterInformation(value = "ArtifactPath",
+		required = true,
+		type = @NestTypeUsage(DocInstallArtifactPath.class),
+		info = @NestInformation("Path to the artifact that should be installed to the repository."))
+@NestParameterInformation(value = "Coordinates",
+		required = true,
+		type = @NestTypeUsage(DocArtifactCoordinates.class),
+		info = @NestInformation("The coordinates of the installed artifact.\n"
+				+ "The given file will be installed to the repository with the artifact coordinates specified "
+				+ "in this parameter."))
+@NestParameterInformation(value = "Configuration",
+		type = @NestTypeUsage(MavenConfigurationTaskOption.class),
+		info = @NestInformation(TaskDocs.PARAM_CONFIGURATION))
 public class InstallArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 	private static final long serialVersionUID = 1L;
 

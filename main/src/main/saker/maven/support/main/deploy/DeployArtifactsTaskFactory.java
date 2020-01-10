@@ -29,11 +29,45 @@ import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.impl.deploy.ArtifactDeployWorkerTaskFactory;
+import saker.maven.support.main.TaskDocs.DocArtifactCoordinates;
+import saker.maven.support.main.TaskDocs.DocArtifactDeployWorkerTaskOutput;
+import saker.maven.support.main.TaskDocs.DocDeployArtifactPath;
+import saker.maven.support.main.TaskDocs.DocDeploymentSpecifier;
 import saker.maven.support.main.configuration.option.MavenOperationConfigurationTaskOptionUtils;
 import saker.maven.support.main.configuration.option.RepositoryTaskOption;
+import saker.nest.scriptinfo.reflection.annot.NestInformation;
+import saker.nest.scriptinfo.reflection.annot.NestParameterInformation;
+import saker.nest.scriptinfo.reflection.annot.NestTaskInformation;
+import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 import saker.nest.utils.FrontendTaskFactory;
 
-//TODO taskdoc
+@NestTaskInformation(returnType = @NestTypeUsage(DocArtifactDeployWorkerTaskOutput.class))
+@NestInformation("Deploys the specified artifacts to the given remote Maven repository.\n"
+		+ "The task deploys multiple artifacts in a batch. The artifacts can be provided "
+		+ "by using specifiers and file paths. The specifies tell the deploy task what classifier "
+		+ "and extension a given artifact has.")
+
+@NestParameterInformation(value = "Artifacts",
+		aliases = "",
+		required = true,
+		type = @NestTypeUsage(value = Map.class,
+				elementTypes = { DocDeploymentSpecifier.class, DocDeployArtifactPath.class }),
+		info = @NestInformation("Specifies the artifacts that should be deployed.\n"
+				+ "The artifacts can be specified in a map where the keys are the <classifier>:<extension> formatted "
+				+ "specifiers, and the values are the paths to the artifact files.\n"
+				+ "The specifiers will be merged with the Coordinates parameter to determine the final "
+				+ "deployment coordinates of the artifact."))
+@NestParameterInformation(value = "Coordinates",
+		required = true,
+		type = @NestTypeUsage(DocArtifactCoordinates.class),
+		info = @NestInformation("Specifies the deployment target coordinates.\n"
+				+ "The deployment will be performed targetting the specified coordinates.\n"
+				+ "The classifier and extension parts of the coordinates are ignored. The coordinates are merged "
+				+ "with each deployed artifact specifiers."))
+@NestParameterInformation(value = "RemoteRepository",
+		required = true,
+		type = @NestTypeUsage(RepositoryTaskOption.class),
+		info = @NestInformation("Specifies the remote repository to where the deployment should be performed."))
 public class DeployArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 	private static final long serialVersionUID = 1L;
 

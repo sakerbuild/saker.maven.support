@@ -18,8 +18,25 @@ package saker.maven.support.api.install;
 import saker.build.file.path.SakerPath;
 import saker.maven.support.api.ArtifactCoordinates;
 
+/**
+ * Output of an artifact installation worker task.
+ * <p>
+ * The interface provides access to the resulting local path of the artifact as well as the coordinates of it.
+ * <p>
+ * Clients shouldn't implement this interface.
+ */
 public interface ArtifactInstallWorkerTaskOutput {
+	/**
+	 * Gets the local path to the installed artifact.
+	 * 
+	 * @return The absolute local file system path.
+	 */
 	public SakerPath getArtifactLocalPath();
 
+	/**
+	 * Gets the coordinates of the installed artifact.
+	 * 
+	 * @return The coordinates.
+	 */
 	public ArtifactCoordinates getCoordinates();
 }

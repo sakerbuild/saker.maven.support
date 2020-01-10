@@ -44,6 +44,7 @@ import saker.maven.support.impl.dependency.option.MavenDependencyOption;
 import saker.maven.support.main.TaskDocs;
 import saker.maven.support.main.TaskDocs.DocArtifactCoordinates;
 import saker.maven.support.main.TaskDocs.DocMavenDependencyResolutionTaskOutput;
+import saker.maven.support.main.TaskDocs.DocMavenPomPath;
 import saker.maven.support.main.configuration.option.MavenConfigurationTaskOption;
 import saker.maven.support.main.configuration.option.MavenOperationConfigurationTaskOptionUtils;
 import saker.maven.support.main.dependency.option.ExclusionTaskOption;
@@ -74,7 +75,7 @@ import saker.nest.utils.FrontendTaskFactory;
 				+ ResolveMavenDependencyTaskFactory.DEFAULT_DEPENDENCY_SCOPE + ".\n"
 				+ "This parameter cannot be used together with Pom or Dependencies."))
 @NestParameterInformation(value = "Pom",
-		type = @NestTypeUsage(SakerPath.class),
+		type = @NestTypeUsage(DocMavenPomPath.class),
 		info = @NestInformation("Specifies a path to a pom.xml file from which the dependencies should be resolved.\n"
 				+ "The task will parse the specified pom.xml and resolve the dependencies of it. The specified file doesn't "
 				+ "necessarily need to have the pom.xml name.\n"
