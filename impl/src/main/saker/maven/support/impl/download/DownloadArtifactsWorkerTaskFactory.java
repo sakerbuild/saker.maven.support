@@ -119,7 +119,7 @@ public class DownloadArtifactsWorkerTaskFactory implements TaskFactory<ArtifactD
 
 			RepositorySystem reposystem = serviceLocator.getService(RepositorySystem.class);
 
-			DefaultRepositorySystemSession reposession = MavenImplUtils.createNewSession(taskcontext);
+			DefaultRepositorySystemSession reposession = MavenImplUtils.createNewSession(taskcontext, config);
 
 			LocalRepository localrepository = new LocalRepository(repositorybasedir.toString());
 			LocalRepositoryManager localrepomanager = reposystem.newLocalRepositoryManager(reposession,

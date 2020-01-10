@@ -29,6 +29,9 @@ import saker.build.task.TaskContext;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.util.property.SystemPropertyEnvironmentProperty;
 import saker.maven.support.api.MavenOperationConfiguration;
+import saker.maven.support.api.MavenOperationConfiguration.AccountAuthenticationConfiguration;
+import saker.maven.support.api.MavenOperationConfiguration.AuthenticationConfiguration;
+import saker.maven.support.api.MavenOperationConfiguration.PrivateKeyAuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryPolicyConfiguration;
 import saker.maven.support.impl.dependency.option.ExclusionOption;
@@ -52,6 +55,7 @@ import saker.maven.support.thirdparty.org.eclipse.aether.transfer.ChecksumFailur
 import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferResource;
 import saker.maven.support.thirdparty.org.eclipse.aether.transport.file.FileTransporterFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.transport.http.HttpTransporterFactory;
+import saker.maven.support.thirdparty.org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 public class MavenImplUtils {
 	public static final String DEFAULT_CHECKSUM_POLICY = RepositoryPolicy.CHECKSUM_POLICY_WARN;
@@ -100,6 +104,7 @@ public class MavenImplUtils {
 			throw new IllegalArgumentException(
 					"Failed to determine default Maven local repository location. \"user.home\" system property not found.");
 		}
+		//see also: https://maven.apache.org/settings.html that declares "The default value is ${user.home}/.m2/repository."
 		return SakerPath.valueOf(userhome + "/.m2/repository");
 	}
 
@@ -115,8 +120,14 @@ public class MavenImplUtils {
 		return serviceLocator;
 	}
 
-	public static DefaultRepositorySystemSession createNewSession(TaskContext taskcontext) {
+	public static DefaultRepositorySystemSession createNewSession(TaskContext taskcontext,
+			MavenOperationConfiguration config) {
 		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+
+		//clear the properties as the system properties shouldn't affect the session.
+		session.setSystemProperties(Collections.emptyMap());
+		session.setConfigProperties(Collections.emptyMap());
+
 		//don't use pom repositories
 		session.setIgnoreArtifactDescriptorRepositories(true);
 		session.setRepositoryListener(new TaskContextRepositorySessionListener(taskcontext));
@@ -159,6 +170,26 @@ public class MavenImplUtils {
 
 			builder.setReleasePolicy(toRepositoryPolicy(repoconfig.getReleasePolicy()));
 			builder.setSnapshotPolicy(toRepositoryPolicy(repoconfig.getSnapshotPolicy()));
+
+			AuthenticationConfiguration auth = repoconfig.getAuthentication();
+			if (auth != null) {
+				auth.accept(new AuthenticationConfiguration.Visitor() {
+					@Override
+					public void visit(AccountAuthenticationConfiguration config) {
+						AuthenticationBuilder authbuilder = new AuthenticationBuilder();
+						authbuilder.addUsername(config.getUserName());
+						authbuilder.addPassword(config.getPassword());
+						builder.setAuthentication(authbuilder.build());
+					}
+
+					@Override
+					public void visit(PrivateKeyAuthenticationConfiguration config) {
+						AuthenticationBuilder authbuilder = new AuthenticationBuilder();
+						authbuilder.addPrivateKey(config.getKeyLocalPath().toString(), config.getPassPhrase());
+						builder.setAuthentication(authbuilder.build());
+					}
+				});
+			}
 
 			result.add(builder.build());
 		}

@@ -53,6 +53,8 @@ public interface RepositoryPolicyTaskOption {
 
 	public String getChecksumPolicy();
 
+	//TODO handle RepositoryPolicyConfiguration input
+	
 	public static RepositoryPolicyTaskOption valueOf(String str) {
 		Objects.requireNonNull(str, "string");
 		if (!str.equalsIgnoreCase("false")) {

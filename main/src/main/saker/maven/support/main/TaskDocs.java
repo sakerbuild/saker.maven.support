@@ -246,4 +246,17 @@ public class TaskDocs {
 	public static class DocArtifactDownloadWorkerTaskOutput {
 	}
 
+	@NestTypeInformation(
+			qualifiedName = "saker.maven.support.api.MavenOperationConfiguration.AccountAuthenticationConfiguration")
+	@NestInformation("Holds username-password pair for authenticating with Maven repositories.")
+	public static class DocAccountAuthenticationConfiguration {
+	}
+
+	@NestTypeInformation(
+			qualifiedName = "saker.maven.support.api.MavenOperationConfiguration.PrivateKeyAuthenticationConfiguration")
+	@NestInformation("Holds a private key and pass phrase pair for authenticating with Maven repositories.\n"
+			+ "Only the local file system path is stored in this configuration.")
+	public static class DocPrivateKeyAuthenticationConfiguration {
+	}
+
 }

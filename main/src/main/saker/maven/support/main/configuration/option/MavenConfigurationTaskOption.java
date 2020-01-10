@@ -44,6 +44,7 @@ public interface MavenConfigurationTaskOption {
 		return MavenOperationConfigurationTaskOptionUtils.createConfiguration(this);
 	}
 
+	//XXX we should accept LocalFileLocation as well
 	public default SakerPath getLocalRepositoryPath() {
 		return null;
 	}

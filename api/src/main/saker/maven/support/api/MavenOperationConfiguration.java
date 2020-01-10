@@ -22,6 +22,7 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.Set;
 
+import saker.build.exception.InvalidPathFormatException;
 import saker.build.file.path.SakerPath;
 import saker.build.file.provider.SakerPathFiles;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
@@ -251,6 +252,8 @@ public final class MavenOperationConfiguration implements Externalizable {
 		private RepositoryPolicyConfiguration snapshotPolicy;
 		private RepositoryPolicyConfiguration releasePolicy;
 
+		private AuthenticationConfiguration authentication;
+
 		/**
 		 * For {@link Externalizable}.
 		 * 
@@ -293,21 +296,47 @@ public final class MavenOperationConfiguration implements Externalizable {
 		 * @param url
 		 *            The repository URL.
 		 * @param snapshotPolicy
-		 *            The snapshot policy.
+		 *            The snapshot policy. May be <code>null</code>.
 		 * @param releasePolicy
-		 *            The release policy.
+		 *            The release policy. May be <code>null</code>.
 		 * @throws NullPointerException
 		 *             If the URL is <code>null</code>.
 		 */
 		public RepositoryConfiguration(String id, String layout, String url,
 				RepositoryPolicyConfiguration snapshotPolicy, RepositoryPolicyConfiguration releasePolicy)
 				throws NullPointerException {
+			this(id, layout, url, snapshotPolicy, releasePolicy, null);
+		}
+
+		/**
+		 * Creates a new configuration with the specified properties.
+		 * 
+		 * @param id
+		 *            The repository ID.
+		 * @param layout
+		 *            The repository layout type. Either <code>"default"</code> or <code>"legacy"</code>. If
+		 *            <code>null</code>, it will be set to <code>"default"</code>.
+		 * @param url
+		 *            The repository URL.
+		 * @param snapshotPolicy
+		 *            The snapshot policy. May be <code>null</code>.
+		 * @param releasePolicy
+		 *            The release policy. May be <code>null</code>.
+		 * @param auth
+		 *            The authentication configuration. May be <code>null</code>.
+		 * @throws NullPointerException
+		 *             If the URL is <code>null</code>.
+		 */
+		public RepositoryConfiguration(String id, String layout, String url,
+				RepositoryPolicyConfiguration snapshotPolicy, RepositoryPolicyConfiguration releasePolicy,
+				AuthenticationConfiguration auth) throws NullPointerException {
 			Objects.requireNonNull(url, "Maven repository URL");
 			this.id = id;
 			this.layout = layout == null ? "default" : layout;
 			this.url = url;
 			this.snapshotPolicy = snapshotPolicy;
 			this.releasePolicy = releasePolicy;
+			this.authentication = auth;
 		}
 
 		/**
@@ -381,7 +410,7 @@ public final class MavenOperationConfiguration implements Externalizable {
 			return releasePolicy;
 		}
 
-		//for compatibility with MavenConfigurationTaskOption
+		//for compatibility with RepositoryTaskOption
 		/**
 		 * @see #getSnapshotPolicy()
 		 */
@@ -389,12 +418,22 @@ public final class MavenOperationConfiguration implements Externalizable {
 			return snapshotPolicy;
 		}
 
-		//for compatibility with MavenConfigurationTaskOption
+		//for compatibility with RepositoryTaskOption
 		/**
 		 * @see #getReleasePolicy()
 		 */
 		public RepositoryPolicyConfiguration getReleases() {
 			return releasePolicy;
+		}
+
+		/**
+		 * Gets the authentication configuration.
+		 * 
+		 * @return The authentication configuration or <code>null</code> if not set.
+		 */
+		//keep same name as in RepositoryTaskOption
+		public AuthenticationConfiguration getAuthentication() {
+			return authentication;
 		}
 
 		@Override
@@ -404,6 +443,7 @@ public final class MavenOperationConfiguration implements Externalizable {
 			out.writeObject(url);
 			out.writeObject(snapshotPolicy);
 			out.writeObject(releasePolicy);
+			out.writeObject(authentication);
 		}
 
 		@Override
@@ -413,6 +453,7 @@ public final class MavenOperationConfiguration implements Externalizable {
 			url = (String) in.readObject();
 			snapshotPolicy = (RepositoryPolicyConfiguration) in.readObject();
 			releasePolicy = (RepositoryPolicyConfiguration) in.readObject();
+			authentication = (AuthenticationConfiguration) in.readObject();
 		}
 
 		@Override
@@ -429,10 +470,20 @@ public final class MavenOperationConfiguration implements Externalizable {
 			if (getClass() != obj.getClass())
 				return false;
 			RepositoryConfiguration other = (RepositoryConfiguration) obj;
+			if (authentication == null) {
+				if (other.authentication != null)
+					return false;
+			} else if (!authentication.equals(other.authentication))
+				return false;
 			if (id == null) {
 				if (other.id != null)
 					return false;
 			} else if (!id.equals(other.id))
+				return false;
+			if (layout == null) {
+				if (other.layout != null)
+					return false;
+			} else if (!layout.equals(other.layout))
 				return false;
 			if (releasePolicy == null) {
 				if (other.releasePolicy != null)
@@ -443,11 +494,6 @@ public final class MavenOperationConfiguration implements Externalizable {
 				if (other.snapshotPolicy != null)
 					return false;
 			} else if (!snapshotPolicy.equals(other.snapshotPolicy))
-				return false;
-			if (layout == null) {
-				if (other.layout != null)
-					return false;
-			} else if (!layout.equals(other.layout))
 				return false;
 			if (url == null) {
 				if (other.url != null)
@@ -462,7 +508,281 @@ public final class MavenOperationConfiguration implements Externalizable {
 			return getClass().getSimpleName() + "[" + (id != null ? "id=" + id + ", " : "")
 					+ (layout != null ? "layout=" + layout + ", " : "") + (url != null ? "url=" + url + ", " : "")
 					+ (snapshotPolicy != null ? "snapshotPolicy=" + snapshotPolicy + ", " : "")
-					+ (releasePolicy != null ? "releasePolicy=" + releasePolicy : "") + "]";
+					+ (releasePolicy != null ? "releasePolicy=" + releasePolicy + ", " : "")
+					+ (authentication != null ? "authentication=" + authentication : "") + "]";
+		}
+
+	}
+
+	/**
+	 * Abstract superclass for possible authentication types for remote repositories.
+	 * 
+	 * @since saker.maven.support 0.8.1
+	 * @see AccountAuthenticationConfiguration
+	 * @see PrivateKeyAuthenticationConfiguration
+	 */
+	public static abstract class AuthenticationConfiguration {
+		/**
+		 * Visitor interface for the possible types of authentication configurations.
+		 */
+		public interface Visitor {
+			/**
+			 * Visits an account configuration.
+			 * 
+			 * @param config
+			 *            The authentication configuration.
+			 */
+			public void visit(AccountAuthenticationConfiguration config);
+
+			/**
+			 * Visits a private key configuration.
+			 * 
+			 * @param config
+			 *            The authentication configuration.
+			 */
+			public void visit(PrivateKeyAuthenticationConfiguration config);
+		}
+
+		AuthenticationConfiguration() {
+		}
+
+		/**
+		 * Accepts a visitor.
+		 * <p>
+		 * The method calls an appropriate <code>visit</code> method of the argument based on the dynamic type of this
+		 * object.
+		 * 
+		 * @param visitor
+		 *            The visitor.
+		 * @throws NullPointerException
+		 *             If the visitor is <code>null</code>.
+		 */
+		public abstract void accept(Visitor visitor) throws NullPointerException;
+	}
+
+	/**
+	 * Username-password based authentication configuration.
+	 * <p>
+	 * The class simply holds the username-password string pair.
+	 * 
+	 * @since saker.maven.support 0.8.1
+	 */
+	public static final class AccountAuthenticationConfiguration extends AuthenticationConfiguration
+			implements Externalizable {
+		private static final long serialVersionUID = 1L;
+
+		private String userName;
+		private String password;
+
+		/**
+		 * For {@link Externalizable}.
+		 * 
+		 * @deprecated Use {@link #AccountAuthenticationConfiguration(String, String)}
+		 */
+		@Deprecated
+		public AccountAuthenticationConfiguration() {
+		}
+
+		/**
+		 * Creates a new instance for the specified username-password pair.
+		 * 
+		 * @param userName
+		 *            The username. May be <code>null</code>.
+		 * @param password
+		 *            the password. May be <code>null</code>.
+		 */
+		public AccountAuthenticationConfiguration(String userName, String password) {
+			this.userName = userName;
+			this.password = password;
+		}
+
+		@Override
+		public void accept(Visitor visitor) {
+			Objects.requireNonNull(visitor, "visitor");
+			visitor.visit(this);
+		}
+
+		/**
+		 * Gets the username.
+		 * 
+		 * @return The username.
+		 */
+		public String getUserName() {
+			return userName;
+		}
+
+		/**
+		 * Gets the password.
+		 * 
+		 * @return The password.
+		 */
+		public String getPassword() {
+			return password;
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(userName);
+			out.writeObject(password);
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			userName = (String) in.readObject();
+			password = (String) in.readObject();
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((userName == null) ? 0 : userName.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			AccountAuthenticationConfiguration other = (AccountAuthenticationConfiguration) obj;
+			if (password == null) {
+				if (other.password != null)
+					return false;
+			} else if (!password.equals(other.password))
+				return false;
+			if (userName == null) {
+				if (other.userName != null)
+					return false;
+			} else if (!userName.equals(other.userName))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName() + "[" + (userName != null ? "userName=" + userName + ", " : "")
+					+ (password != null ? "password=<present>" : "") + "]";
+		}
+	}
+
+	/**
+	 * Authentication configuration that holds the local file system path to a private key store and its associated pass
+	 * phrase.
+	 * 
+	 * @since saker.maven.support 0.8.1
+	 */
+	public static final class PrivateKeyAuthenticationConfiguration extends AuthenticationConfiguration
+			implements Externalizable {
+		private static final long serialVersionUID = 1L;
+
+		private SakerPath keyLocalPath;
+		private String passPhrase;
+
+		/**
+		 * For {@link Externalizable}.
+		 * 
+		 * @deprecated Use {@link #PrivateKeyAuthenticationConfiguration(SakerPath, String)}
+		 */
+		@Deprecated
+		public PrivateKeyAuthenticationConfiguration() {
+		}
+
+		/**
+		 * Creates a new instance.
+		 * 
+		 * @param keyLocalPath
+		 *            The local file system path to the key store.
+		 * @param passPhrase
+		 *            The pass phrase. May be <code>null</code>.
+		 * @throws NullPointerException
+		 *             If the private key path is <code>null</code>.
+		 * @throws InvalidPathFormatException
+		 *             If the path is not absolute.
+		 */
+		public PrivateKeyAuthenticationConfiguration(SakerPath keyLocalPath, String passPhrase)
+				throws NullPointerException, InvalidPathFormatException {
+			Objects.requireNonNull(keyLocalPath, "private key local path");
+			if (!keyLocalPath.isAbsolute()) {
+				throw new InvalidPathFormatException("Private key local path must be absolute.");
+			}
+			this.keyLocalPath = keyLocalPath;
+			this.passPhrase = passPhrase;
+		}
+
+		/**
+		 * Gets the private key local path.
+		 * 
+		 * @return The path.
+		 */
+		public SakerPath getKeyLocalPath() {
+			return keyLocalPath;
+		}
+
+		/**
+		 * Gets the pass phrase associated with the keystore.
+		 * 
+		 * @return The pass phrase. May be <code>null</code>.
+		 */
+		public String getPassPhrase() {
+			return passPhrase;
+		}
+
+		@Override
+		public void accept(Visitor visitor) throws NullPointerException {
+			visitor.visit(this);
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(keyLocalPath);
+			out.writeObject(passPhrase);
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			keyLocalPath = (SakerPath) in.readObject();
+			passPhrase = (String) in.readObject();
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((keyLocalPath == null) ? 0 : keyLocalPath.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			PrivateKeyAuthenticationConfiguration other = (PrivateKeyAuthenticationConfiguration) obj;
+			if (keyLocalPath == null) {
+				if (other.keyLocalPath != null)
+					return false;
+			} else if (!keyLocalPath.equals(other.keyLocalPath))
+				return false;
+			if (passPhrase == null) {
+				if (other.passPhrase != null)
+					return false;
+			} else if (!passPhrase.equals(other.passPhrase))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName() + "["
+					+ (keyLocalPath != null ? "keyLocalPath=" + keyLocalPath + ", " : "")
+					+ (passPhrase != null ? "passPhrase=<present>" : "") + "]";
 		}
 
 	}

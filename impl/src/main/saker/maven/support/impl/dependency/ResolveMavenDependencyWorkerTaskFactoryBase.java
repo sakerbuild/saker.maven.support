@@ -177,7 +177,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 
 		RepositorySystem reposystem = serviceLocator.getService(RepositorySystem.class);
 
-		DefaultRepositorySystemSession reposession = MavenImplUtils.createNewSession(taskcontext);
+		DefaultRepositorySystemSession reposession = MavenImplUtils.createNewSession(taskcontext, config);
 
 		LocalRepository localrepository = new LocalRepository(repositorybasedir.toString());
 		reposession.setLocalRepositoryManager(reposystem.newLocalRepositoryManager(reposession, localrepository));
