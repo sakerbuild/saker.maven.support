@@ -22,6 +22,7 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.Set;
 
+import saker.build.exception.InvalidPathFormatException;
 import saker.build.file.path.SakerPath;
 import saker.build.file.provider.SakerPathFiles;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
@@ -513,17 +514,59 @@ public final class MavenOperationConfiguration implements Externalizable {
 
 	}
 
+	/**
+	 * Abstract superclass for possible authentication types for remote repositories.
+	 * 
+	 * @since saker.maven.support 0.8.1
+	 * @see AccountAuthenticationConfiguration
+	 * @see PrivateKeyAuthenticationConfiguration
+	 */
 	public static abstract class AuthenticationConfiguration {
+		/**
+		 * Visitor interface for the possible types of authentication configurations.
+		 */
 		public interface Visitor {
+			/**
+			 * Visits an account configuration.
+			 * 
+			 * @param config
+			 *            The authentication configuration.
+			 */
 			public void visit(AccountAuthenticationConfiguration config);
+
+			/**
+			 * Visits a private key configuration.
+			 * 
+			 * @param config
+			 *            The authentication configuration.
+			 */
+			public void visit(PrivateKeyAuthenticationConfiguration config);
 		}
 
 		AuthenticationConfiguration() {
 		}
 
-		public abstract void accept(Visitor visitor);
+		/**
+		 * Accepts a visitor.
+		 * <p>
+		 * The method calls an appropriate <code>visit</code> method of the argument based on the dynamic type of this
+		 * object.
+		 * 
+		 * @param visitor
+		 *            The visitor.
+		 * @throws NullPointerException
+		 *             If the visitor is <code>null</code>.
+		 */
+		public abstract void accept(Visitor visitor) throws NullPointerException;
 	}
 
+	/**
+	 * Username-password based authentication configuration.
+	 * <p>
+	 * The class simply holds the username-password string pair.
+	 * 
+	 * @since saker.maven.support 0.8.1
+	 */
 	public static final class AccountAuthenticationConfiguration extends AuthenticationConfiguration
 			implements Externalizable {
 		private static final long serialVersionUID = 1L;
@@ -540,22 +583,39 @@ public final class MavenOperationConfiguration implements Externalizable {
 		public AccountAuthenticationConfiguration() {
 		}
 
+		/**
+		 * Creates a new instance for the specified username-password pair.
+		 * 
+		 * @param userName
+		 *            The username. May be <code>null</code>.
+		 * @param password
+		 *            the password. May be <code>null</code>.
+		 */
 		public AccountAuthenticationConfiguration(String userName, String password) {
-			Objects.requireNonNull(userName, "username");
-			Objects.requireNonNull(password, "password");
 			this.userName = userName;
 			this.password = password;
 		}
 
 		@Override
 		public void accept(Visitor visitor) {
+			Objects.requireNonNull(visitor, "visitor");
 			visitor.visit(this);
 		}
 
+		/**
+		 * Gets the username.
+		 * 
+		 * @return The username.
+		 */
 		public String getUserName() {
 			return userName;
 		}
 
+		/**
+		 * Gets the password.
+		 * 
+		 * @return The password.
+		 */
 		public String getPassword() {
 			return password;
 		}
@@ -604,9 +664,127 @@ public final class MavenOperationConfiguration implements Externalizable {
 
 		@Override
 		public String toString() {
-			//don't display the password in the tostring
-			return getClass().getSimpleName() + "[userName=" + userName + "]";
+			return getClass().getSimpleName() + "[" + (userName != null ? "userName=" + userName + ", " : "")
+					+ (password != null ? "password=<present>" : "") + "]";
 		}
+	}
+
+	/**
+	 * Authentication configuration that holds the local file system path to a private key store and its associated pass
+	 * phrase.
+	 * 
+	 * @since saker.maven.support 0.8.1
+	 */
+	public static final class PrivateKeyAuthenticationConfiguration extends AuthenticationConfiguration
+			implements Externalizable {
+		private static final long serialVersionUID = 1L;
+
+		private SakerPath keyLocalPath;
+		private String passPhrase;
+
+		/**
+		 * For {@link Externalizable}.
+		 * 
+		 * @deprecated Use {@link #PrivateKeyAuthenticationConfiguration(SakerPath, String)}
+		 */
+		@Deprecated
+		public PrivateKeyAuthenticationConfiguration() {
+		}
+
+		/**
+		 * Creates a new instance.
+		 * 
+		 * @param keyLocalPath
+		 *            The local file system path to the key store.
+		 * @param passPhrase
+		 *            The pass phrase. May be <code>null</code>.
+		 * @throws NullPointerException
+		 *             If the private key path is <code>null</code>.
+		 * @throws InvalidPathFormatException
+		 *             If the path is not absolute.
+		 */
+		public PrivateKeyAuthenticationConfiguration(SakerPath keyLocalPath, String passPhrase)
+				throws NullPointerException, InvalidPathFormatException {
+			Objects.requireNonNull(keyLocalPath, "private key local path");
+			if (!keyLocalPath.isAbsolute()) {
+				throw new InvalidPathFormatException("Private key local path must be absolute.");
+			}
+			this.keyLocalPath = keyLocalPath;
+			this.passPhrase = passPhrase;
+		}
+
+		/**
+		 * Gets the private key local path.
+		 * 
+		 * @return The path.
+		 */
+		public SakerPath getKeyLocalPath() {
+			return keyLocalPath;
+		}
+
+		/**
+		 * Gets the pass phrase associated with the keystore.
+		 * 
+		 * @return The pass phrase. May be <code>null</code>.
+		 */
+		public String getPassPhrase() {
+			return passPhrase;
+		}
+
+		@Override
+		public void accept(Visitor visitor) throws NullPointerException {
+			visitor.visit(this);
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(keyLocalPath);
+			out.writeObject(passPhrase);
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			keyLocalPath = (SakerPath) in.readObject();
+			passPhrase = (String) in.readObject();
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((keyLocalPath == null) ? 0 : keyLocalPath.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			PrivateKeyAuthenticationConfiguration other = (PrivateKeyAuthenticationConfiguration) obj;
+			if (keyLocalPath == null) {
+				if (other.keyLocalPath != null)
+					return false;
+			} else if (!keyLocalPath.equals(other.keyLocalPath))
+				return false;
+			if (passPhrase == null) {
+				if (other.passPhrase != null)
+					return false;
+			} else if (!passPhrase.equals(other.passPhrase))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName() + "["
+					+ (keyLocalPath != null ? "keyLocalPath=" + keyLocalPath + ", " : "")
+					+ (passPhrase != null ? "passPhrase=<present>" : "") + "]";
+		}
+
 	}
 
 	private static final long serialVersionUID = 1L;

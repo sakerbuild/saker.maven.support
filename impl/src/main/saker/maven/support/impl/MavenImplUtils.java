@@ -31,6 +31,7 @@ import saker.build.util.property.SystemPropertyEnvironmentProperty;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.AccountAuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.AuthenticationConfiguration;
+import saker.maven.support.api.MavenOperationConfiguration.PrivateKeyAuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryPolicyConfiguration;
 import saker.maven.support.impl.dependency.option.ExclusionOption;
@@ -178,6 +179,13 @@ public class MavenImplUtils {
 						AuthenticationBuilder authbuilder = new AuthenticationBuilder();
 						authbuilder.addUsername(config.getUserName());
 						authbuilder.addPassword(config.getPassword());
+						builder.setAuthentication(authbuilder.build());
+					}
+
+					@Override
+					public void visit(PrivateKeyAuthenticationConfiguration config) {
+						AuthenticationBuilder authbuilder = new AuthenticationBuilder();
+						authbuilder.addPrivateKey(config.getKeyLocalPath().toString(), config.getPassPhrase());
 						builder.setAuthentication(authbuilder.build());
 					}
 				});

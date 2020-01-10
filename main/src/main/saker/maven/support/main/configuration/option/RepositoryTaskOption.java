@@ -46,6 +46,9 @@ import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 		info = @NestInformation("Specifies the release policy of the repository configuration.\n"
 				+ "The option defines how release artifacts should be handled.\n"
 				+ "Corresponds to the <releases/> element in the pom.xml."))
+@NestFieldInformation(value = "Authentication",
+		type = @NestTypeUsage(AuthenticationTaskOption.class),
+		info = @NestInformation("Specifies the authentication configuration that should be used for this repository."))
 public interface RepositoryTaskOption {
 	public String getId();
 
@@ -58,6 +61,6 @@ public interface RepositoryTaskOption {
 	public RepositoryPolicyTaskOption getReleases();
 
 	public AuthenticationTaskOption getAuthentication();
-	
+
 	//TODO handle RepositoryConfiguration
 }

@@ -2,3 +2,4 @@ saker.maven.resolve=saker.maven.support.main.dependency.ResolveMavenDependencyTa
 saker.maven.download=saker.maven.support.main.download.DownloadArtifactsTaskFactory
 saker.maven.localize=saker.maven.support.main.localize.LocalizeArtifactsTaskFactory
 saker.maven.auth.account=saker.maven.support.main.auth.AccountAuthenticationTaskFactory
+saker.maven.auth.privatekey=saker.maven.support.main.auth.PrivateKeyAuthenticationTaskFactory

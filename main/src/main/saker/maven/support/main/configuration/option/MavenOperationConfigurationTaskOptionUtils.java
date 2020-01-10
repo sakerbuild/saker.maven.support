@@ -24,7 +24,6 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.maven.support.api.MavenOperationConfiguration;
-import saker.maven.support.api.MavenOperationConfiguration.AccountAuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.AuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryPolicyConfiguration;
