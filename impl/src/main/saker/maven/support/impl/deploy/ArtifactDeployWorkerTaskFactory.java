@@ -123,6 +123,8 @@ public class ArtifactDeployWorkerTaskFactory
 		if (artifacts.isEmpty()) {
 			return new ArtifactDeployWorkerTaskOutputImpl(coordinates);
 		}
+		taskcontext.setStandardOutDisplayIdentifier(DeployArtifactsTaskFactory.TASK_NAME);
+
 		Map<Entry<String, String>, Path> mirrorpaths = new LinkedHashMap<>();
 		for (Entry<String, SakerPath> entry : artifacts.entrySet()) {
 			SakerPath artifactpath = entry.getValue();

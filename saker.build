@@ -1,4 +1,4 @@
-global(VERSION_saker.maven.support) = "0.8.1"
+global(VERSION_saker.maven.support) = "0.8.2"
 
 static(VERSION_saker.build) = nest.dependency.resolve(
 	saker.build,
@@ -19,7 +19,7 @@ compile(
 			impl/src/main/,
 		],
 		ClassPath: [
-			lib/saker.maven.support-lib-v0.8.0.jar,
+			lib/saker.maven.support-lib-v0.8.2.jar,
 			saker.java.classpath.bundle([
 				"saker.build-api-v{ static(VERSION_saker.build) }",
 				"saker.nest-api-v{ static(VERSION_saker.nest) }"
@@ -41,7 +41,7 @@ export(
 		$apijar[Path],
 		$impljar[Path],
 		$sourcejar[Path],
-		path(lib/saker.maven.support-lib-v0.8.0.jar),
+		path(lib/saker.maven.support-lib-v0.8.2.jar),
 	]
 ) {
 	$mainjar = saker.jar.create(

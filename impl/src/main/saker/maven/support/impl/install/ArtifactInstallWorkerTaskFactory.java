@@ -43,6 +43,7 @@ import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.install.ArtifactInstallWorkerTaskOutput;
 import saker.maven.support.impl.ArtifactContentDescriptorExecutionProperty;
 import saker.maven.support.impl.MavenImplUtils;
+import saker.maven.support.main.install.InstallArtifactsTaskFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.DefaultRepositorySystemSession;
 import saker.maven.support.thirdparty.org.eclipse.aether.RepositorySystem;
 import saker.maven.support.thirdparty.org.eclipse.aether.artifact.Artifact;
@@ -92,6 +93,8 @@ public class ArtifactInstallWorkerTaskFactory
 	@SuppressWarnings("try")
 	@Override
 	public ArtifactInstallWorkerTaskOutput run(TaskContext taskcontext) throws Exception {
+		taskcontext.setStandardOutDisplayIdentifier(InstallArtifactsTaskFactory.TASK_NAME);
+
 		SakerFile artifactfile = artifactPath == null ? null
 				: taskcontext.getTaskUtilities().resolveFileAtPath(artifactPath);
 		if (artifactfile == null) {

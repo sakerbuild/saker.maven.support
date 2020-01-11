@@ -52,6 +52,9 @@ import saker.maven.support.thirdparty.org.apache.maven.model.locator.DefaultMode
 import saker.maven.support.thirdparty.org.apache.maven.model.locator.ModelLocator;
 import saker.maven.support.thirdparty.org.apache.maven.model.validation.ModelValidator;
 import saker.maven.support.thirdparty.org.apache.maven.repository.internal.MavenRepositorySystemUtils;
+import saker.maven.support.thirdparty.org.apache.maven.wagon.ConnectionException;
+import saker.maven.support.thirdparty.org.apache.maven.wagon.Wagon;
+import saker.maven.support.thirdparty.org.apache.maven.wagon.providers.http.HttpWagon;
 import saker.maven.support.thirdparty.org.eclipse.aether.AbstractRepositoryListener;
 import saker.maven.support.thirdparty.org.eclipse.aether.DefaultRepositorySystemSession;
 import saker.maven.support.thirdparty.org.eclipse.aether.RepositoryEvent;
@@ -68,12 +71,10 @@ import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.checksum.
 import saker.maven.support.thirdparty.org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.spi.log.LoggerFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.transfer.ChecksumFailureException;
-import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferCancelledException;
-import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferEvent;
-import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferListener;
 import saker.maven.support.thirdparty.org.eclipse.aether.transfer.TransferResource;
 import saker.maven.support.thirdparty.org.eclipse.aether.transport.file.FileTransporterFactory;
-import saker.maven.support.thirdparty.org.eclipse.aether.transport.http.HttpTransporterFactory;
+import saker.maven.support.thirdparty.org.eclipse.aether.transport.wagon.WagonProvider;
+import saker.maven.support.thirdparty.org.eclipse.aether.transport.wagon.WagonTransporterFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 public class MavenImplUtils {
@@ -131,7 +132,29 @@ public class MavenImplUtils {
 		DefaultServiceLocator serviceLocator = MavenRepositorySystemUtils.newServiceLocator();
 		serviceLocator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
 		serviceLocator.addService(TransporterFactory.class, FileTransporterFactory.class);
-		serviceLocator.addService(TransporterFactory.class, HttpTransporterFactory.class);
+		serviceLocator.addService(TransporterFactory.class, WagonTransporterFactory.class);
+		serviceLocator.setServices(WagonProvider.class, new WagonProvider() {
+			@Override
+			public void release(Wagon wagon) {
+				try {
+					wagon.disconnect();
+				} catch (ConnectionException e) {
+					// XXX log exception?
+					e.printStackTrace();
+				}
+			}
+
+			@Override
+			public Wagon lookup(String roleHint) throws Exception {
+				if ("http".equals(roleHint) || "https".equals(roleHint)) {
+					return new HttpWagon();
+				}
+				throw new UnsupportedOperationException();
+			}
+		});
+		//use wagon instead of HttpTransporterFactory as that fails when we want to deploy artifacts
+//		serviceLocator.addService(TransporterFactory.class, HttpTransporterFactory.class);
+
 		serviceLocator.setService(ModelBuilder.class, BugFixModelBuilder.class);
 		serviceLocator.setServices(ChecksumPolicyProvider.class, new SupportChecksumPolicyProvider());
 		serviceLocator.setServices(LoggerFactory.class);
@@ -150,13 +173,14 @@ public class MavenImplUtils {
 
 		// clear the properties as the system properties shouldn't affect the session.
 		//TODO somehow ensure that only the repository session is not modified by system properties
-		//the clearing is currenlty removed, as thta causes the dependency resolution to fail somewhy.
+		//the clearing is currenlty removed, as that causes the dependency resolution to fail somewhy.
 //		session.setSystemProperties(Collections.emptyMap());
 //		session.setConfigProperties(Collections.emptyMap());
 
 		//don't use pom repositories
 		session.setIgnoreArtifactDescriptorRepositories(true);
 		session.setRepositoryListener(new TaskContextRepositorySessionListener(taskcontext));
+
 		return session;
 	}
 
@@ -242,15 +266,15 @@ public class MavenImplUtils {
 	}
 
 	private static final class TaskContextRepositorySessionListener extends AbstractRepositoryListener {
-		private final TaskContext taskcontext;
+		private final TaskContext taskContext;
 
 		private TaskContextRepositorySessionListener(TaskContext taskcontext) {
-			this.taskcontext = taskcontext;
+			this.taskContext = taskcontext;
 		}
 
 		@Override
 		public void artifactDownloading(RepositoryEvent event) {
-			SakerLog.log().out(taskcontext).verbose()
+			SakerLog.log().out(taskContext).verbose()
 					.println("Downloading artifact: " + event.getArtifact() + " from " + event.getRepository().getId());
 		}
 
@@ -258,15 +282,15 @@ public class MavenImplUtils {
 		public void artifactDownloaded(RepositoryEvent event) {
 			Exception exc = event.getException();
 			if (exc == null) {
-				SakerLog.log().out(taskcontext).verbose().println(
+				SakerLog.log().out(taskContext).verbose().println(
 						"Downloaded artifact: " + event.getArtifact() + " from " + event.getRepository().getId());
 			} else {
-				SakerLog.log().out(taskcontext).verbose().println("Failed to download artifact: " + event.getArtifact()
+				SakerLog.log().out(taskContext).verbose().println("Failed to download artifact: " + event.getArtifact()
 						+ " from " + event.getRepository().getId() + " (" + exc + ")");
 			}
 			File file = event.getFile();
 			if (file != null) {
-				taskcontext.invalidate(LocalFileProvider.getPathKeyStatic(SakerPath.valueOf(file.getAbsolutePath())));
+				taskContext.invalidate(LocalFileProvider.getPathKeyStatic(SakerPath.valueOf(file.getAbsolutePath())));
 			}
 		}
 
@@ -274,7 +298,28 @@ public class MavenImplUtils {
 		public void artifactInstalled(RepositoryEvent event) {
 			File file = event.getFile();
 			if (file != null) {
-				taskcontext.invalidate(LocalFileProvider.getPathKeyStatic(SakerPath.valueOf(file.getAbsolutePath())));
+				taskContext.invalidate(LocalFileProvider.getPathKeyStatic(SakerPath.valueOf(file.getAbsolutePath())));
+			}
+			SakerLog.success().out(taskContext).verbose()
+					.println("Installed: " + event.getArtifact() + " to " + event.getRepository().getId());
+		}
+
+		@Override
+		public void artifactDeploying(RepositoryEvent event) {
+			SakerLog.log().out(taskContext).verbose()
+					.println("Deploying: " + event.getArtifact() + " to " + event.getRepository().getId());
+		}
+
+		@Override
+		public void artifactDeployed(RepositoryEvent event) {
+			super.artifactDeployed(event);
+			Exception exc = event.getException();
+			if (exc == null && ObjectUtils.isNullOrEmpty(event.getExceptions())) {
+				SakerLog.success().out(taskContext).verbose()
+						.println("Deployed: " + event.getArtifact() + " to " + event.getRepository().getId());
+			} else {
+				SakerLog.error().out(taskContext).verbose().println("Failed to deploy: " + event.getArtifact() + " to "
+						+ event.getRepository().getId() + "(" + exc + ")");
 			}
 		}
 	}
