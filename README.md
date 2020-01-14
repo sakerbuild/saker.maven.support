@@ -1,6 +1,6 @@
 # saker.maven.support
 
-![Build status](https://img.shields.io/azure-devops/build/sakerbuild/43ecb95f-a0df-4b67-b49d-4baf89309860/11/master)
+![Build status](https://img.shields.io/azure-devops/build/sakerbuild/43ecb95f-a0df-4b67-b49d-4baf89309860/11/master) [![Latest version](https://mirror.nest.saker.build/badges/saker.maven.support/version.svg)](https://nest.saker.build/package/saker.maven.support "saker.maven.support | saker.nest")
 
 Build tasks and support classes for dealing with Maven repositories and artifacts in the [saker.build system](https://saker.build). The package allows resolving dependencies, downloading artifacts, and other related operations during builds.
 
