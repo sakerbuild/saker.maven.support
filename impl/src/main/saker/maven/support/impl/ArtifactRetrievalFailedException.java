@@ -13,29 +13,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package saker.maven.support.impl.download;
+package saker.maven.support.impl;
 
-public class ArtifactDownloadFailedException extends RuntimeException {
+public class ArtifactRetrievalFailedException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 
-	public ArtifactDownloadFailedException() {
+	public ArtifactRetrievalFailedException() {
 		super();
 	}
 
-	protected ArtifactDownloadFailedException(String message, Throwable cause, boolean enableSuppression,
+	protected ArtifactRetrievalFailedException(String message, Throwable cause, boolean enableSuppression,
 			boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public ArtifactDownloadFailedException(String message, Throwable cause) {
+	public ArtifactRetrievalFailedException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	public ArtifactDownloadFailedException(String message) {
+	public ArtifactRetrievalFailedException(String message) {
 		super(message);
 	}
 
-	public ArtifactDownloadFailedException(Throwable cause) {
+	public ArtifactRetrievalFailedException(Throwable cause) {
 		super(cause);
 	}
 

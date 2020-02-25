@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package saker.maven.support.impl.download;
+package saker.maven.support.impl;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -27,7 +27,7 @@ import saker.build.task.utils.StructuredTaskResult;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 
-public class DownloadFailedStructuredTaskResult implements StructuredTaskResult, Externalizable {
+public class RetrievalFailedStructuredTaskResult implements StructuredTaskResult, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private String message;
@@ -36,10 +36,10 @@ public class DownloadFailedStructuredTaskResult implements StructuredTaskResult,
 	/**
 	 * For {@link Externalizable}.
 	 */
-	public DownloadFailedStructuredTaskResult() {
+	public RetrievalFailedStructuredTaskResult() {
 	}
 
-	public DownloadFailedStructuredTaskResult(String message, List<? extends Throwable> causes) {
+	public RetrievalFailedStructuredTaskResult(String message, List<? extends Throwable> causes) {
 		this.message = message;
 		this.causes = causes;
 	}
@@ -47,10 +47,10 @@ public class DownloadFailedStructuredTaskResult implements StructuredTaskResult,
 	@Override
 	public Object toResult(TaskResultResolver results) {
 		if (ObjectUtils.isNullOrEmpty(causes)) {
-			throw new ArtifactDownloadFailedException(message);
+			throw new ArtifactRetrievalFailedException(message);
 		}
 		Iterator<? extends Throwable> it = causes.iterator();
-		ArtifactDownloadFailedException exc = new ArtifactDownloadFailedException(message, it.next());
+		ArtifactRetrievalFailedException exc = new ArtifactRetrievalFailedException(message, it.next());
 		while (it.hasNext()) {
 			Throwable c = it.next();
 			if (c == null) {
@@ -90,7 +90,7 @@ public class DownloadFailedStructuredTaskResult implements StructuredTaskResult,
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		DownloadFailedStructuredTaskResult other = (DownloadFailedStructuredTaskResult) obj;
+		RetrievalFailedStructuredTaskResult other = (RetrievalFailedStructuredTaskResult) obj;
 		if (causes == null) {
 			if (other.causes != null)
 				return false;

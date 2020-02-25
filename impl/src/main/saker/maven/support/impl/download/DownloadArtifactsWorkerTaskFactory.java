@@ -55,6 +55,7 @@ import saker.maven.support.impl.ArtifactContentDescriptorExecutionProperty;
 import saker.maven.support.impl.ArtifactUtils;
 import saker.maven.support.impl.MavenImplUtils;
 import saker.maven.support.impl.MavenSupportImpl;
+import saker.maven.support.impl.RetrievalFailedStructuredTaskResult;
 import saker.maven.support.main.download.DownloadArtifactsTaskFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.DefaultRepositorySystemSession;
 import saker.maven.support.thirdparty.org.eclipse.aether.RepositorySystem;
@@ -157,7 +158,7 @@ public class DownloadArtifactsWorkerTaskFactory implements TaskFactory<ArtifactD
 					ArtifactCoordinates acoords = entry.getValue();
 
 					coordinateResults.put(acoords,
-							new DownloadFailedStructuredTaskResult("Failed to download " + acoords, failexceptions));
+							new RetrievalFailedStructuredTaskResult("Failed to download " + acoords, failexceptions));
 				} while (it.hasNext());
 			}
 		}
@@ -199,7 +200,7 @@ public class DownloadArtifactsWorkerTaskFactory implements TaskFactory<ArtifactD
 				installDownloadFailedDependencies(taskcontext, repositorybasedir, localrepomanager, cduniqueness,
 						request, requestartifact);
 
-				coordinateResults.put(acoords, new DownloadFailedStructuredTaskResult("Failed to download " + acoords,
+				coordinateResults.put(acoords, new RetrievalFailedStructuredTaskResult("Failed to download " + acoords,
 						ImmutableUtils.makeImmutableList(exceptions)));
 				continue;
 			}
@@ -207,7 +208,7 @@ public class DownloadArtifactsWorkerTaskFactory implements TaskFactory<ArtifactD
 				installDownloadFailedDependencies(taskcontext, repositorybasedir, localrepomanager, cduniqueness,
 						request, resultartifact);
 
-				coordinateResults.put(acoords, new DownloadFailedStructuredTaskResult("Failed to download " + acoords,
+				coordinateResults.put(acoords, new RetrievalFailedStructuredTaskResult("Failed to download " + acoords,
 						ImmutableUtils.makeImmutableList(exceptions)));
 				continue;
 			}
@@ -216,7 +217,7 @@ public class DownloadArtifactsWorkerTaskFactory implements TaskFactory<ArtifactD
 			ContentDescriptor artifactcd = taskcontext.getTaskUtilities().getReportExecutionDependency(
 					new ArtifactContentDescriptorExecutionProperty(cduniqueness, artifactpath));
 			if (artifactcd == null) {
-				coordinateResults.put(acoords, new DownloadFailedStructuredTaskResult("Failed to download " + acoords,
+				coordinateResults.put(acoords, new RetrievalFailedStructuredTaskResult("Failed to download " + acoords,
 						ImmutableUtils.singletonList(
 								new FileNotFoundException("Failed to retrieve content descriptor: " + artifactpath))));
 				continue;

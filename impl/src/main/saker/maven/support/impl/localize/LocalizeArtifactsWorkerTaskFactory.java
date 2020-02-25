@@ -53,8 +53,8 @@ import saker.maven.support.api.localize.ArtifactLocalizationTaskOutput;
 import saker.maven.support.impl.ArtifactContentDescriptorExecutionProperty;
 import saker.maven.support.impl.ArtifactUtils;
 import saker.maven.support.impl.MavenImplUtils;
-import saker.maven.support.impl.download.DownloadFailedStructuredTaskResult;
-import saker.maven.support.main.download.DownloadArtifactsTaskFactory;
+import saker.maven.support.impl.RetrievalFailedStructuredTaskResult;
+import saker.maven.support.main.localize.LocalizeArtifactsTaskFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.DefaultRepositorySystemSession;
 import saker.maven.support.thirdparty.org.eclipse.aether.RepositorySystem;
 import saker.maven.support.thirdparty.org.eclipse.aether.artifact.Artifact;
@@ -94,7 +94,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 	@SuppressWarnings("try")
 	@Override
 	public ArtifactLocalizationTaskOutput run(TaskContext taskcontext) throws Exception {
-		taskcontext.setStandardOutDisplayIdentifier(DownloadArtifactsTaskFactory.TASK_NAME);
+		taskcontext.setStandardOutDisplayIdentifier(LocalizeArtifactsTaskFactory.TASK_NAME);
 
 		MavenOperationConfiguration config = this.configuration;
 		List<RemoteRepository> repositories = MavenImplUtils.createRemoteRepositories(config);
@@ -156,7 +156,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 					ArtifactCoordinates acoords = entry.getValue();
 
 					coordinateResults.put(acoords,
-							new DownloadFailedStructuredTaskResult("Failed to download " + acoords, failexceptions));
+							new RetrievalFailedStructuredTaskResult("Failed to localize " + acoords, failexceptions));
 				} while (it.hasNext());
 			}
 		}
@@ -183,7 +183,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 			ArtifactCoordinates acoords = artifactrequests.remove(request);
 			if (acoords == null) {
 				throw new AssertionError(
-						"Internal error: failed to match artifact download requests to artifact coordinates.");
+						"Internal error: failed to match artifact localization requests to artifact coordinates.");
 			}
 			Artifact resultartifact = result.getArtifact();
 
@@ -198,7 +198,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 				installLocalizationFailedDependencies(taskcontext, repositorybasedir, localrepomanager, cduniqueness,
 						request, requestartifact);
 
-				coordinateResults.put(acoords, new DownloadFailedStructuredTaskResult("Failed to download " + acoords,
+				coordinateResults.put(acoords, new RetrievalFailedStructuredTaskResult("Failed to localize " + acoords,
 						ImmutableUtils.makeImmutableList(exceptions)));
 				continue;
 			}
@@ -206,7 +206,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 				installLocalizationFailedDependencies(taskcontext, repositorybasedir, localrepomanager, cduniqueness,
 						request, resultartifact);
 
-				coordinateResults.put(acoords, new DownloadFailedStructuredTaskResult("Failed to download " + acoords,
+				coordinateResults.put(acoords, new RetrievalFailedStructuredTaskResult("Failed to localize " + acoords,
 						ImmutableUtils.makeImmutableList(exceptions)));
 				continue;
 			}
@@ -215,7 +215,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 			ContentDescriptor artifactcd = taskcontext.getTaskUtilities().getReportExecutionDependency(
 					new ArtifactContentDescriptorExecutionProperty(cduniqueness, artifactpath));
 			if (artifactcd == null) {
-				coordinateResults.put(acoords, new DownloadFailedStructuredTaskResult("Failed to download " + acoords,
+				coordinateResults.put(acoords, new RetrievalFailedStructuredTaskResult("Failed to localize " + acoords,
 						ImmutableUtils.singletonList(
 								new FileNotFoundException("Failed to retrieve content descriptor: " + artifactpath))));
 				continue;
