@@ -248,11 +248,13 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeObject(configuration);
 		SerialUtils.writeExternalCollection(out, artifacts);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		configuration = (MavenOperationConfiguration) in.readObject();
 		artifacts = SerialUtils.readExternalImmutableLinkedHashSet(in);
 	}
 

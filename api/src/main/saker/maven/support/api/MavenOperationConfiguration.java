@@ -869,6 +869,12 @@ public final class MavenOperationConfiguration implements Externalizable {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[localRepositoryPath=" + localRepositoryPath + ", repositories="
+				+ repositories + "]";
+	}
+
 	/**
 	 * Creates a new {@link MavenOperationConfiguration} builder.
 	 * 
