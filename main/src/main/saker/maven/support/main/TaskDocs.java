@@ -90,9 +90,36 @@ public class TaskDocs {
 	public static class DocUpdatePolicy {
 	}
 
-	@NestInformation("Represents Maven artifact coordinates in the format of <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>.")
+	private static final String INFO_ARTIFACT_COORDINATES = "Represents Maven artifact coordinates in the format of <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>.";
+
+	// The difference between DocInputArtifactCoordinates and DocOutputArtifactCoordinates is that the output artifact coordinates
+	//   can be subscripted for their individual components. However, the input coordinates cannot be specified by
+	//   their individual components.
+
+	@NestInformation(INFO_ARTIFACT_COORDINATES)
 	@NestTypeInformation(qualifiedName = "saker.maven.support.api.ArtifactCoordinates")
-	public static class DocArtifactCoordinates {
+	public static class DocInputArtifactCoordinates {
+	}
+
+	@NestInformation(INFO_ARTIFACT_COORDINATES)
+	@NestTypeInformation(qualifiedName = "saker.maven.support.api.ArtifactCoordinates")
+	@NestFieldInformation(value = "GroupId",
+			type = @NestTypeUsage(String.class),
+			info = @NestInformation("The group identifier of the artifact. E.g. \"org.apache.maven\"."))
+	@NestFieldInformation(value = "ArtifactId",
+			type = @NestTypeUsage(String.class),
+			info = @NestInformation("The artifact identifier of the artifact. E.g. \"maven-model\"."))
+	@NestFieldInformation(value = "Classifier",
+			type = @NestTypeUsage(String.class),
+			info = @NestInformation("The classifier of the artifact. E.g. \"sources\"."))
+	@NestFieldInformation(value = "Extension",
+			type = @NestTypeUsage(String.class),
+			info = @NestInformation("The extension of the artifact. E.g. \"jar\"."))
+	@NestFieldInformation(value = "Version",
+			type = @NestTypeUsage(String.class),
+			info = @NestInformation("The version of the artifact. E.g. \"1.0.1\".\n"
+					+ "The version can contain additional components such as \"1.0.1-SNAPSHOT\"."))
+	public static class DocOutputArtifactCoordinates {
 	}
 
 	@NestInformation("The scope of an artifact dependency.\n"
@@ -136,7 +163,7 @@ public class TaskDocs {
 			type = @NestTypeUsage(MavenConfigurationTaskOption.class),
 			info = @NestInformation(OUTPUT_CONFIGURATION))
 	@NestFieldInformation(value = "ArtifactCoordinates",
-			type = @NestTypeUsage(value = Collection.class, elementTypes = DocArtifactCoordinates.class),
+			type = @NestTypeUsage(value = Collection.class, elementTypes = DocOutputArtifactCoordinates.class),
 			info = @NestInformation("Gets the artifact coordinates of the resolved artifacts."))
 	@NestFieldInformation(value = "ResolvedArtifacts",
 			type = @NestTypeUsage(value = Collection.class, elementTypes = DocResolvedDependencyArtifact.class),
@@ -181,11 +208,12 @@ public class TaskDocs {
 	@NestInformation("Represents a resolved Maven dependency for a single artifact.\n"
 			+ "Contains the artifact coordinates and the scope of the dependency.")
 	@NestFieldInformation(value = "Coordinates",
-			type = @NestTypeUsage(DocArtifactCoordinates.class),
+			type = @NestTypeUsage(DocOutputArtifactCoordinates.class),
 			info = @NestInformation("Gets the artifact coordinates of the resolved artifacts."))
 	@NestFieldInformation(value = "Scope",
 			type = @NestTypeUsage(DocDependencyScope.class),
 			info = @NestInformation("Gets the dependency scope through which the artifact was resolved."))
+	@NestFieldInformation(value = "Configuration", info = @NestInformation(OUTPUT_CONFIGURATION))
 	public static class DocResolvedDependencyArtifact {
 	}
 
@@ -202,7 +230,7 @@ public class TaskDocs {
 			info = @NestInformation("List of localization results for each localized artifact.\n"
 					+ "Each result element provides access to the coordinates and local path of the artifact."))
 	@NestFieldInformation(value = "Coordinates",
-			type = @NestTypeUsage(value = Collection.class, elementTypes = DocArtifactCoordinates.class),
+			type = @NestTypeUsage(value = Collection.class, elementTypes = DocOutputArtifactCoordinates.class),
 			info = @NestInformation("List of the coordinates of the localized artifacts."))
 	public static class DocArtifactLocalizationTaskOutput {
 	}
@@ -210,7 +238,7 @@ public class TaskDocs {
 	@NestTypeInformation(qualifiedName = "saker.maven.support.api.localize.ArtifactLocalizationWorkerTaskOutput")
 	@NestInformation("Output of a single artifact localization operation.")
 	@NestFieldInformation(value = "Coordinates",
-			type = @NestTypeUsage(DocArtifactCoordinates.class),
+			type = @NestTypeUsage(DocOutputArtifactCoordinates.class),
 			info = @NestInformation("The localized artifact coordinates."))
 	@NestFieldInformation(value = "LocalPath",
 			type = @NestTypeUsage(SakerPath.class),
@@ -230,7 +258,7 @@ public class TaskDocs {
 			info = @NestInformation("List of download results for each downloaded artifact.\n"
 					+ "Each result element provides access to the coordinates and execution path of the artifact."))
 	@NestFieldInformation(value = "Coordinates",
-			type = @NestTypeUsage(value = Collection.class, elementTypes = DocArtifactCoordinates.class),
+			type = @NestTypeUsage(value = Collection.class, elementTypes = DocOutputArtifactCoordinates.class),
 			info = @NestInformation("List of the coordinates of the downloaded artifacts."))
 	public static class DocArtifactDownloadTaskOutput {
 	}
@@ -238,7 +266,7 @@ public class TaskDocs {
 	@NestTypeInformation(qualifiedName = "saker.maven.support.api.download.ArtifactDownloadWorkerTaskOutput")
 	@NestInformation("Output of a single artifact download operation.")
 	@NestFieldInformation(value = "Coordinates",
-			type = @NestTypeUsage(DocArtifactCoordinates.class),
+			type = @NestTypeUsage(DocOutputArtifactCoordinates.class),
 			info = @NestInformation("The downloaded artifact coordinates."))
 	@NestFieldInformation(value = "Path",
 			type = @NestTypeUsage(SakerPath.class),
@@ -267,7 +295,7 @@ public class TaskDocs {
 					+ "The path is to be interpreted on the local file system and points to the location of the "
 					+ "artifact in the Maven repository to which it was installed to."))
 	@NestFieldInformation(value = "Coordinates",
-			type = @NestTypeUsage(DocArtifactCoordinates.class),
+			type = @NestTypeUsage(DocOutputArtifactCoordinates.class),
 			info = @NestInformation("The artifact coordinates of the installed artifact."))
 	public static class DocArtifactInstallWorkerTaskOutput {
 	}
@@ -275,7 +303,7 @@ public class TaskDocs {
 	@NestTypeInformation(qualifiedName = "saker.maven.support.api.deploy.ArtifactDeployWorkerTaskOutput")
 	@NestInformation("Result of a Maven artifact deployment task.")
 	@NestFieldInformation(value = "Coordinates",
-			type = @NestTypeUsage(DocArtifactCoordinates.class),
+			type = @NestTypeUsage(DocOutputArtifactCoordinates.class),
 			info = @NestInformation("The artifact coordinates of the deployed artifacts.\n"
 					+ "The coordinates doesn't contain classifier and extension."))
 	public static class DocArtifactDeployWorkerTaskOutput {

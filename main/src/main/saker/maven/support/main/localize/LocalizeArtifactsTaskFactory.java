@@ -34,15 +34,14 @@ import saker.build.task.utils.annot.SakerInput;
 import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
-import saker.build.thirdparty.saker.util.io.IOUtils;
-import saker.build.util.data.DataConverterUtils;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.dependency.MavenDependencyResolutionTaskOutput;
+import saker.maven.support.api.dependency.ResolvedDependencyArtifact;
 import saker.maven.support.api.localize.ArtifactLocalizationTaskOutput;
 import saker.maven.support.impl.MavenSupportImpl;
 import saker.maven.support.main.TaskDocs;
-import saker.maven.support.main.TaskDocs.DocArtifactCoordinates;
+import saker.maven.support.main.TaskDocs.DocInputArtifactCoordinates;
 import saker.maven.support.main.TaskDocs.DocArtifactLocalizationTaskOutput;
 import saker.maven.support.main.configuration.option.MavenConfigurationTaskOption;
 import saker.maven.support.main.configuration.option.MavenOperationConfigurationTaskOptionUtils;
@@ -64,7 +63,7 @@ import saker.nest.utils.FrontendTaskFactory;
 		+ "Take care when using the result of this task, as it may cause unexpected results when mixed with execution paths.")
 @NestParameterInformation(value = "Artifacts",
 		aliases = { "", "Artifact" },
-		type = @NestTypeUsage(value = Collection.class, elementTypes = DocArtifactCoordinates.class),
+		type = @NestTypeUsage(value = Collection.class, elementTypes = DocInputArtifactCoordinates.class),
 		info = @NestInformation("Specifies one or more artifact coordinates to be localized."
 				+ "The artifact coordinates are expected in the <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version> format.\n"
 				+ "The dependencies of the artifacts are NOT resolved.\n" + "This parameter accepts the output of the "
@@ -137,23 +136,21 @@ public class LocalizeArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 
 				//TODO handle artifact localization result?
 
-				Exception adaptexc = null;
-				try {
-					Object adapted = DataConverterUtils.adaptInterface(this.getClass().getClassLoader(), artifacts);
-					if (adapted instanceof MavenDependencyResolutionTaskOutput) {
-						MavenDependencyResolutionTaskOutput depoutput = (MavenDependencyResolutionTaskOutput) adapted;
-						Set<ArtifactCoordinates> coordinates = ImmutableUtils
-								.makeImmutableLinkedHashSet(depoutput.getArtifactCoordinates());
-						return handleArtifactCoordinates(taskcontext, depoutput.getConfiguration(), coordinates);
-					}
-				} catch (Exception e) {
-					adaptexc = e;
+				if (artifacts instanceof MavenDependencyResolutionTaskOutput) {
+					MavenDependencyResolutionTaskOutput depoutput = (MavenDependencyResolutionTaskOutput) artifacts;
+					Set<ArtifactCoordinates> coordinates = ImmutableUtils
+							.makeImmutableLinkedHashSet(depoutput.getArtifactCoordinates());
+					return handleArtifactCoordinates(taskcontext, depoutput.getConfiguration(), coordinates);
+				}
+				if (artifacts instanceof ResolvedDependencyArtifact) {
+					ResolvedDependencyArtifact resolvedartifact = (ResolvedDependencyArtifact) artifacts;
+					return handleArtifactCoordinates(taskcontext, resolvedartifact.getConfiguration(),
+							ImmutableUtils.singletonSet(resolvedartifact.getCoordinates()));
 				}
 
 				String coordsstr = Objects.toString(artifacts, null);
 				if (coordsstr == null) {
 					NullPointerException npe = new NullPointerException("null Artifacts input argument.");
-					IOUtils.addExc(npe, adaptexc);
 					taskcontext.abortExecution(npe);
 					return null;
 				}
@@ -161,7 +158,6 @@ public class LocalizeArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 					return handleArtifactCoordinates(taskcontext, getRepositoryOperationConfiguration(),
 							Collections.singleton(ArtifactCoordinates.valueOf(coordsstr)));
 				} catch (IllegalArgumentException e) {
-					IOUtils.addExc(e, adaptexc);
 					taskcontext.abortExecution(e);
 					return null;
 				}

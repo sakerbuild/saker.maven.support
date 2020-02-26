@@ -42,7 +42,7 @@ import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 				+ "is not added automatically, and you need to add it yourself."))
 public interface MavenConfigurationTaskOption {
 	public default MavenOperationConfiguration createConfiguration() {
-		return MavenOperationConfigurationTaskOptionUtils.createConfiguration(this);
+		return MavenOperationConfigurationTaskOptionUtils.createConfigurationImpl(this);
 	}
 
 	//XXX we should accept LocalFileLocation as well

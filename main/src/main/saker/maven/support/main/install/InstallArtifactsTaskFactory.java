@@ -27,7 +27,7 @@ import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.impl.install.ArtifactInstallWorkerTaskFactory;
 import saker.maven.support.main.TaskDocs;
-import saker.maven.support.main.TaskDocs.DocArtifactCoordinates;
+import saker.maven.support.main.TaskDocs.DocInputArtifactCoordinates;
 import saker.maven.support.main.TaskDocs.DocArtifactInstallWorkerTaskOutput;
 import saker.maven.support.main.TaskDocs.DocInstallArtifactPath;
 import saker.maven.support.main.configuration.option.MavenConfigurationTaskOption;
@@ -50,7 +50,7 @@ import saker.nest.utils.FrontendTaskFactory;
 		info = @NestInformation("Path to the artifact that should be installed to the repository."))
 @NestParameterInformation(value = "Coordinates",
 		required = true,
-		type = @NestTypeUsage(DocArtifactCoordinates.class),
+		type = @NestTypeUsage(DocInputArtifactCoordinates.class),
 		info = @NestInformation("The coordinates of the installed artifact.\n"
 				+ "The given file will be installed to the repository with the artifact coordinates specified "
 				+ "in this parameter."))

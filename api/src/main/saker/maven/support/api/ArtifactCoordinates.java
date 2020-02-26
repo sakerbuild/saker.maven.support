@@ -156,6 +156,7 @@ public final class ArtifactCoordinates implements Externalizable {
 	 * 
 	 * @return The group identifier, never {@code null}.
 	 */
+	//task documented API
 	public String getGroupId() {
 		return groupId;
 	}
@@ -165,6 +166,7 @@ public final class ArtifactCoordinates implements Externalizable {
 	 * 
 	 * @return The artifact identifier, never {@code null}.
 	 */
+	//task documented API
 	public String getArtifactId() {
 		return artifactId;
 	}
@@ -174,6 +176,7 @@ public final class ArtifactCoordinates implements Externalizable {
 	 * 
 	 * @return The classifier or <code>null</code> if none.
 	 */
+	//task documented API
 	public String getClassifier() {
 		return classifier;
 	}
@@ -183,6 +186,7 @@ public final class ArtifactCoordinates implements Externalizable {
 	 * 
 	 * @return The file extension (without leading period) or <code>null</code> if none.
 	 */
+	//task documented API
 	public String getExtension() {
 		return extension;
 	}
@@ -195,6 +199,7 @@ public final class ArtifactCoordinates implements Externalizable {
 	 * 
 	 * @return The version, never {@code null}.
 	 */
+	//task documented API
 	public String getVersion() {
 		return version;
 	}

@@ -47,4 +47,14 @@ public interface ArtifactDownloadWorkerTaskOutput {
 	 * @return The content descriptor.
 	 */
 	public ContentDescriptor getContentDescriptor();
+
+	//for conversion compatibility
+	/**
+	 * Gets the execution path of the downloaded artifact in the build file hierarchy.
+	 * 
+	 * @return The absolute execution path.
+	 */
+	public default SakerPath toSakerPath() {
+		return getPath();
+	}
 }

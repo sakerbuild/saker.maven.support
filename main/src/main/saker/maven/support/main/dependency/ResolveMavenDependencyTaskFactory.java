@@ -42,7 +42,7 @@ import saker.maven.support.impl.MavenSupportImpl;
 import saker.maven.support.impl.dependency.option.ExclusionOption;
 import saker.maven.support.impl.dependency.option.MavenDependencyOption;
 import saker.maven.support.main.TaskDocs;
-import saker.maven.support.main.TaskDocs.DocArtifactCoordinates;
+import saker.maven.support.main.TaskDocs.DocInputArtifactCoordinates;
 import saker.maven.support.main.TaskDocs.DocMavenDependencyResolutionTaskOutput;
 import saker.maven.support.main.TaskDocs.DocMavenPomPath;
 import saker.maven.support.main.configuration.option.MavenConfigurationTaskOption;
@@ -67,7 +67,7 @@ import saker.nest.utils.FrontendTaskFactory;
 		+ "consult the documentation of the library at: https://maven.apache.org/resolver/index.html")
 @NestParameterInformation(value = "Artifacts",
 		aliases = { "", "Artifact" },
-		type = @NestTypeUsage(value = Collection.class, elementTypes = DocArtifactCoordinates.class),
+		type = @NestTypeUsage(value = Collection.class, elementTypes = DocInputArtifactCoordinates.class),
 		info = @NestInformation("Specifies the artifact coordinates that should be resolved.\n"
 				+ "The artifact coordinates are expected in the <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version> format.\n"
 				+ "The coordinates are directly passed to the Maven resolver backend.\n"
@@ -82,7 +82,7 @@ import saker.nest.utils.FrontendTaskFactory;
 				+ "This parameter cannot be used together with Artifacts or Dependencies."))
 @NestParameterInformation(value = "Dependencies",
 		type = @NestTypeUsage(value = Map.class,
-				elementTypes = { DocArtifactCoordinates.class, MavenDependencyTaskOption.class }),
+				elementTypes = { DocInputArtifactCoordinates.class, MavenDependencyTaskOption.class }),
 		info = @NestInformation("Specifies artifact dependencies that should be resolved.\n"
 				+ "The dependencies are specified in a map with artifact coordinate keys, and dependency specification values.\n"
 				+ "The dependency specifications contain the scope, exclusions and optionality of the dependency. If no scope "

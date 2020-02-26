@@ -209,7 +209,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 						Artifact artifact = node.getArtifact();
 						if (artifact != null) {
 							entries.add(new ResolvedDependencyArtifactImpl(
-									ArtifactUtils.toArtifactCoordinates(artifact), dependency.getScope()));
+									ArtifactUtils.toArtifactCoordinates(artifact), dependency.getScope(), config));
 						}
 						return true;
 					}

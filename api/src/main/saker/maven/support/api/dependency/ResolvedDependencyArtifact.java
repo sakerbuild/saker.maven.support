@@ -16,6 +16,7 @@
 package saker.maven.support.api.dependency;
 
 import saker.maven.support.api.ArtifactCoordinates;
+import saker.maven.support.api.MavenOperationConfiguration;
 
 /**
  * Represents a single artifact that was resolved for a given dependency.
@@ -39,4 +40,11 @@ public interface ResolvedDependencyArtifact {
 	 * @return The dependency scope.
 	 */
 	public String getScope();
+
+	/**
+	 * Gets the {@link MavenOperationConfiguration} that was used when performing the dependency resolution.
+	 * 
+	 * @return The configuration.
+	 */
+	public MavenOperationConfiguration getConfiguration();
 }

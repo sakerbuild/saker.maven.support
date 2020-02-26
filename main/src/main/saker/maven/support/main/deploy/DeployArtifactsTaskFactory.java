@@ -29,7 +29,7 @@ import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.impl.deploy.ArtifactDeployWorkerTaskFactory;
-import saker.maven.support.main.TaskDocs.DocArtifactCoordinates;
+import saker.maven.support.main.TaskDocs.DocInputArtifactCoordinates;
 import saker.maven.support.main.TaskDocs.DocArtifactDeployWorkerTaskOutput;
 import saker.maven.support.main.TaskDocs.DocDeployArtifactPath;
 import saker.maven.support.main.TaskDocs.DocDeploymentSpecifier;
@@ -59,7 +59,7 @@ import saker.nest.utils.FrontendTaskFactory;
 				+ "deployment coordinates of the artifact."))
 @NestParameterInformation(value = "Coordinates",
 		required = true,
-		type = @NestTypeUsage(DocArtifactCoordinates.class),
+		type = @NestTypeUsage(DocInputArtifactCoordinates.class),
 		info = @NestInformation("Specifies the deployment target coordinates.\n"
 				+ "The deployment will be performed targetting the specified coordinates.\n"
 				+ "The classifier and extension parts of the coordinates are ignored. The coordinates are merged "

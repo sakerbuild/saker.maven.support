@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import saker.maven.support.api.ArtifactCoordinates;
+import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.dependency.ResolvedDependencyArtifact;
 
 public class ResolvedDependencyArtifactImpl implements ResolvedDependencyArtifact, Externalizable {
@@ -28,6 +29,7 @@ public class ResolvedDependencyArtifactImpl implements ResolvedDependencyArtifac
 
 	private ArtifactCoordinates coordinates;
 	private String scope;
+	private MavenOperationConfiguration configuration;
 
 	/**
 	 * For {@link Externalizable}.
@@ -35,9 +37,11 @@ public class ResolvedDependencyArtifactImpl implements ResolvedDependencyArtifac
 	public ResolvedDependencyArtifactImpl() {
 	}
 
-	public ResolvedDependencyArtifactImpl(ArtifactCoordinates coordinates, String scope) {
+	public ResolvedDependencyArtifactImpl(ArtifactCoordinates coordinates, String scope,
+			MavenOperationConfiguration configuration) {
 		this.coordinates = coordinates;
 		this.scope = scope;
+		this.configuration = configuration;
 	}
 
 	@Override
@@ -50,22 +54,29 @@ public class ResolvedDependencyArtifactImpl implements ResolvedDependencyArtifac
 		return scope;
 	}
 
+	public MavenOperationConfiguration getConfiguration() {
+		return configuration;
+	}
+
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(coordinates);
 		out.writeObject(scope);
+		out.writeObject(configuration);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		coordinates = (ArtifactCoordinates) in.readObject();
 		scope = (String) in.readObject();
+		configuration = (MavenOperationConfiguration) in.readObject();
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((configuration == null) ? 0 : configuration.hashCode());
 		result = prime * result + ((coordinates == null) ? 0 : coordinates.hashCode());
 		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
 		return result;
@@ -80,6 +91,11 @@ public class ResolvedDependencyArtifactImpl implements ResolvedDependencyArtifac
 		if (getClass() != obj.getClass())
 			return false;
 		ResolvedDependencyArtifactImpl other = (ResolvedDependencyArtifactImpl) obj;
+		if (configuration == null) {
+			if (other.configuration != null)
+				return false;
+		} else if (!configuration.equals(other.configuration))
+			return false;
 		if (coordinates == null) {
 			if (other.coordinates != null)
 				return false;

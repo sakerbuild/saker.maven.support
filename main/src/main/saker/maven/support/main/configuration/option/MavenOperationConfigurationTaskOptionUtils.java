@@ -36,6 +36,10 @@ public class MavenOperationConfigurationTaskOptionUtils {
 		if (options == null) {
 			return MavenOperationConfiguration.defaults();
 		}
+		return options.createConfiguration();
+	}
+
+	static MavenOperationConfiguration createConfigurationImpl(MavenConfigurationTaskOption options) {
 		MavenOperationConfiguration.Builder builder = MavenOperationConfiguration.builder();
 		builder.setLocalRepositoryPath(options.getLocalRepositoryPath());
 		Collection<RepositoryTaskOption> repos = options.getRepositories();
