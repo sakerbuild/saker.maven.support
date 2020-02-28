@@ -60,8 +60,7 @@ public class MavenDependencyResolutionTaskOutputImpl implements MavenDependencyR
 
 	@Override
 	public MavenDependencyResolutionExtensionsOutput getExtensions() {
-		// TODO Auto-generated method stub
-		return null;
+		return new MavenDependencyResolutionExtensionsOutputImpl(this);
 	}
 
 	@Override
