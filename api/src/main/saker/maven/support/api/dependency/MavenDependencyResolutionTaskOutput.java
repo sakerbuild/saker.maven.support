@@ -61,4 +61,15 @@ public interface MavenDependencyResolutionTaskOutput {
 	 * @return The scope output.
 	 */
 	public MavenDependencyResolutionScopesOutput getScopes();
+
+	/**
+	 * Gets an object that can be used to filter out artifacts with the specified extension(s).
+	 * <p>
+	 * The result object provides access to the same artifacts as this, but with the artifact extensions specified in
+	 * {@link MavenDependencyResolutionExtensionsOutput#get(String)}.
+	 * 
+	 * @return The extension output.
+	 * @since saker.maven.support 0.8.4
+	 */
+	public MavenDependencyResolutionExtensionsOutput getExtensions();
 }

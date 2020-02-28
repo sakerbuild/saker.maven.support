@@ -806,7 +806,7 @@ public final class MavenOperationConfiguration implements Externalizable {
 	/**
 	 * Gets the local file system path for the local repository.
 	 * <p>
-	 * The default is: <code>{user.dir}/.m2/repository</code>
+	 * The default is: <code>{user.home}/.m2/repository</code>
 	 * 
 	 * @return The local path or <code>null</code> if the default should be used.
 	 */

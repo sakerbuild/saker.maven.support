@@ -16,7 +16,7 @@
 package saker.maven.support.api.dependency;
 
 /**
- * Interface for limiting the scope of a dependency resolution putput.
+ * Interface for limiting the scope of a dependency resolution output.
  * <p>
  * Callers can use the {@link #get(String)} method to get the resolution output that contains only the specified scopes.
  * <p>
@@ -32,7 +32,7 @@ public interface MavenDependencyResolutionScopesOutput {
 	 * <li><code>"Execution"</code>: for the scopes <code>compile</code> and <code>runtime</code>.</li>
 	 * <li><code>"TestCompilation"</code>: for the scopes <code>test</code>, <code>compile</code> and
 	 * <code>provided</code>.</li>
-	 * <li><code>"TestExecution"</code>: for the scopes <code>test</code>,<code>compile</code> and
+	 * <li><code>"TestExecution"</code>: for the scopes <code>test</code>, <code>compile</code> and
 	 * <code>runtime</code>.</li>
 	 * <li><code>"&lt;scope&gt;"</code>: a single Maven scope.</li>
 	 * <li><code>"&lt;scope&gt;[|&lt;scope&gt;]*"</code>: multiple Maven scopes.</li>

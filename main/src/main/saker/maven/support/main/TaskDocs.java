@@ -171,8 +171,12 @@ public class TaskDocs {
 					+ "The elements contain information about the artifact coordinates and the scope of the resolved dependency."))
 	@NestFieldInformation(value = "Scopes",
 			type = @NestTypeUsage(DocMavenDependencyResolutionScopesOutput.class),
-			info = @NestInformation("Gets a lookup object that can be used to retrieve views that contain resolved dependencies only for a given scope.\n"
+			info = @NestInformation("Gets a lookup object that can be used to retrieve a view of the output that contain resolved dependencies only for a given scope.\n"
 					+ "Retrieving the appropriate fields will return the task output for the given scope of dependencies."))
+	@NestFieldInformation(value = "Extensions",
+			type = @NestTypeUsage(DocMavenDependencyResolutionExtensionsOutput.class),
+			info = @NestInformation("Gets a lookup object that can be used to retrieve a view of the output that contain artifacts only with the specified extensions.\n"
+					+ "Retrieving the appropriate fields will return the task output containing only artifacts for the specified extension(s)."))
 	public static class DocMavenDependencyResolutionTaskOutput {
 
 	}
@@ -202,6 +206,16 @@ public class TaskDocs {
 			info = @NestInformation("Gets the resolved dependencies to be passed for test execution.\n"
 					+ "Retrieves the resolved artifacts available through the test, compile and runtime scopes."))
 	public static class DocMavenDependencyResolutionScopesOutput {
+	}
+
+	@NestTypeInformation(kind = TypeInformationKind.OBJECT,
+			qualifiedName = "saker.maven.support.api.dependency.MavenDependencyResolutionExtensionsOutput")
+	@NestInformation("Extension lookup object of a Maven dependency resolution output.\n"
+			+ "Use the fields with the extension of your choice to retrieve the resolution output that only contains artifacts with the "
+			+ "specified extension.\n"
+			+ "The fields can be specified as a single extension like \"jar\", or separated by | character like \"jar|zip\".")
+	public static class DocMavenDependencyResolutionExtensionsOutput {
+
 	}
 
 	@NestTypeInformation(qualifiedName = "saker.maven.support.api.dependency.ResolvedDependencyArtifact")

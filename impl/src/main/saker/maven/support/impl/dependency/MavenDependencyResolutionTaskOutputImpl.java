@@ -25,6 +25,7 @@ import java.util.LinkedHashSet;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
+import saker.maven.support.api.dependency.MavenDependencyResolutionExtensionsOutput;
 import saker.maven.support.api.dependency.MavenDependencyResolutionScopesOutput;
 import saker.maven.support.api.dependency.MavenDependencyResolutionTaskOutput;
 import saker.maven.support.api.dependency.ResolvedDependencyArtifact;
@@ -55,6 +56,12 @@ public class MavenDependencyResolutionTaskOutputImpl implements MavenDependencyR
 	@Override
 	public MavenDependencyResolutionScopesOutput getScopes() {
 		return new MavenDependencyResolutionScopesOutputImpl(this);
+	}
+
+	@Override
+	public MavenDependencyResolutionExtensionsOutput getExtensions() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
