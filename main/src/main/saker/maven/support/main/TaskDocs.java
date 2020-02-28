@@ -214,6 +214,19 @@ public class TaskDocs {
 			+ "Use the fields with the extension of your choice to retrieve the resolution output that only contains artifacts with the "
 			+ "specified extension.\n"
 			+ "The fields can be specified as a single extension like \"jar\", or separated by | character like \"jar|zip\".")
+
+	@NestFieldInformation(value = "jar",
+			type = @NestTypeUsage(DocMavenDependencyResolutionTaskOutput.class),
+			info = @NestInformation("Gets the resolved artifacts that have the \"jar\" extension. (Java archive)"))
+	@NestFieldInformation(value = "war",
+			type = @NestTypeUsage(DocMavenDependencyResolutionTaskOutput.class),
+			info = @NestInformation("Gets the resolved artifacts that have the \"war\" extension. (Web application archive)"))
+	@NestFieldInformation(value = "ear",
+			type = @NestTypeUsage(DocMavenDependencyResolutionTaskOutput.class),
+			info = @NestInformation("Gets the resolved artifacts that have the \"ear\" extension. (Enterprise application archive)"))
+	@NestFieldInformation(value = "aar",
+			type = @NestTypeUsage(DocMavenDependencyResolutionTaskOutput.class),
+			info = @NestInformation("Gets the resolved artifacts that have the \"aar\" extension. (Android archive)"))
 	public static class DocMavenDependencyResolutionExtensionsOutput {
 
 	}
