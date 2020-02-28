@@ -31,7 +31,6 @@ import saker.build.file.provider.LocalFileProvider;
 import saker.build.runtime.execution.SakerLog;
 import saker.build.task.TaskContext;
 import saker.build.thirdparty.saker.util.ObjectUtils;
-import saker.build.util.property.SystemPropertyEnvironmentProperty;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.AccountAuthenticationConfiguration;
@@ -39,6 +38,7 @@ import saker.maven.support.api.MavenOperationConfiguration.AuthenticationConfigu
 import saker.maven.support.api.MavenOperationConfiguration.PrivateKeyAuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryPolicyConfiguration;
+import saker.maven.support.api.MavenUtils;
 import saker.maven.support.impl.dependency.option.ExclusionOption;
 import saker.maven.support.thirdparty.org.apache.maven.model.Model;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.DefaultModelBuildingRequest;
@@ -114,18 +114,7 @@ public class MavenImplUtils {
 		if (result != null) {
 			return result;
 		}
-		return getDefaultMavenLocalRepositoryLocation(taskcontext);
-	}
-
-	public static SakerPath getDefaultMavenLocalRepositoryLocation(TaskContext taskcontext) {
-		String userhome = taskcontext.getTaskUtilities()
-				.getReportEnvironmentDependency(new SystemPropertyEnvironmentProperty("user.home"));
-		if (ObjectUtils.isNullOrEmpty(userhome)) {
-			throw new IllegalArgumentException(
-					"Failed to determine default Maven local repository location. \"user.home\" system property not found.");
-		}
-		//see also: https://maven.apache.org/settings.html that declares "The default value is ${user.home}/.m2/repository."
-		return SakerPath.valueOf(userhome + "/.m2/repository");
+		return MavenUtils.getDefaultMavenLocalRepositoryLocation(taskcontext);
 	}
 
 	public static DefaultServiceLocator getDefaultServiceLocator() {

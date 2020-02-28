@@ -25,6 +25,7 @@ import java.util.Set;
 import saker.build.exception.InvalidPathFormatException;
 import saker.build.file.path.SakerPath;
 import saker.build.file.provider.SakerPathFiles;
+import saker.build.task.TaskContext;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 
@@ -809,6 +810,7 @@ public final class MavenOperationConfiguration implements Externalizable {
 	 * The default is: <code>{user.home}/.m2/repository</code>
 	 * 
 	 * @return The local path or <code>null</code> if the default should be used.
+	 * @see MavenUtils#getDefaultMavenLocalRepositoryLocation(TaskContext)
 	 */
 	public SakerPath getLocalRepositoryPath() {
 		return localRepositoryPath;
