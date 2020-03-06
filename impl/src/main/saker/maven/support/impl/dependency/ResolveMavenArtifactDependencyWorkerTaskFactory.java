@@ -64,31 +64,7 @@ public class ResolveMavenArtifactDependencyWorkerTaskFactory extends ResolveMave
 	@Override
 	public MavenDependencyResolutionTaskOutput run(TaskContext taskcontext) throws Exception {
 		taskcontext.setStandardOutDisplayIdentifier(ResolveMavenDependencyTaskFactory.TASK_NAME);
-
-		List<Dependency> collectdependencies = new ArrayList<>();
-		for (Entry<? extends ArtifactCoordinates, ? extends MavenDependencyOption> entry : this.coordinates
-				.entrySet()) {
-			Artifact artifact = ArtifactUtils.toArtifact(entry.getKey());
-			MavenDependencyOption depoption = entry.getValue();
-			String scope = depoption.getScope();
-			Set<Exclusion> depexclusions;
-			Collection<? extends ExclusionOption> exclusions = depoption.getExclusions();
-			if (!ObjectUtils.isNullOrEmpty(exclusions)) {
-				depexclusions = new LinkedHashSet<>();
-				for (ExclusionOption excloption : exclusions) {
-					if (excloption == null) {
-						continue;
-					}
-					depexclusions.add(MavenImplUtils.toExclusion(excloption));
-				}
-			} else {
-				depexclusions = Collections.emptySet();
-			}
-			Dependency dep = new Dependency(artifact, scope, depoption.getOptional(), depexclusions);
-
-			collectdependencies.add(dep);
-		}
-		return resolveDependencies(taskcontext, collectdependencies);
+		return resolveArtifactDependencies(taskcontext, coordinates);
 	}
 
 	@Override

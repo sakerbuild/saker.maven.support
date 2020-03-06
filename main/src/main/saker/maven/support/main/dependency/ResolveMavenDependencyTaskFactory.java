@@ -73,7 +73,8 @@ import saker.nest.utils.FrontendTaskFactory;
 				+ "The coordinates are directly passed to the Maven resolver backend.\n"
 				+ "Using this parameter, the scope of the dependencies will be "
 				+ ResolveMavenDependencyTaskFactory.DEFAULT_DEPENDENCY_SCOPE + ".\n"
-				+ "This parameter cannot be used together with Pom or Dependencies."))
+				+ "This parameter cannot be used together with Pom or Dependencies.\n"
+				+ "If the <extension> part is omitted, it will be inferred from the <packaging> tag of the associated pom file."))
 @NestParameterInformation(value = "Pom",
 		type = @NestTypeUsage(DocMavenPomPath.class),
 		info = @NestInformation("Specifies a path to a pom.xml file from which the dependencies should be resolved.\n"
@@ -88,7 +89,8 @@ import saker.nest.utils.FrontendTaskFactory;
 				+ "The dependency specifications contain the scope, exclusions and optionality of the dependency. If no scope "
 				+ "is specified, " + ResolveMavenDependencyTaskFactory.DEFAULT_DEPENDENCY_SCOPE + " is used.\n"
 				+ "This parameter cannot be used together with Artifacts or Pom.\n"
-				+ "The parameter is set to work the same way as the <dependency/> element(s) in the pom.xml."))
+				+ "The parameter is set to work the same way as the <dependency/> element(s) in the pom.xml.\n"
+				+ "If the extension part of the coordinates is omitted, it will be inferred from the <packaging> tag of the associated pom file."))
 @NestParameterInformation(value = "Configuration",
 		type = @NestTypeUsage(MavenConfigurationTaskOption.class),
 		info = @NestInformation(TaskDocs.PARAM_CONFIGURATION))

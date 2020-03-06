@@ -124,8 +124,6 @@ public final class ArtifactCoordinates implements Externalizable {
 	 * &lt;groupId&gt;:&lt;artifactId&gt;[:&lt;extension&gt;[:&lt;classifier&gt;]]:&lt;version&gt;
 	 * </pre>
 	 * 
-	 * If <code>extension</code> is not specified, it will be defaulted to <code>"jar"</code>.
-	 * 
 	 * @param coordinates
 	 *            The artifact coordinates to parse.
 	 * @return The created {@link ArtifactCoordinates} representation.
@@ -145,7 +143,7 @@ public final class ArtifactCoordinates implements Externalizable {
 		}
 		String groupId = m.group(1);
 		String artifactId = m.group(2);
-		String extension = ObjectUtils.nullDefault(m.group(4), "jar");
+		String extension = m.group(4);
 		String classifier = m.group(6);
 		String version = m.group(7);
 		return new ArtifactCoordinates(groupId, artifactId, classifier, extension, version);
@@ -182,7 +180,11 @@ public final class ArtifactCoordinates implements Externalizable {
 	}
 
 	/**
-	 * Gets the (file) extension of this artifact, for example "jar" or "tar.gz".
+	 * Gets the (file) extension of this artifact, for example "jar", "aar" or "tar.gz".
+	 * <p>
+	 * If this method returns <code>null</code> or an empty string, the caller should attempt to infer a default value
+	 * that makes sense in that context. As an example, you can infer "jar", or determine a default extension based on
+	 * the packaging type in the artifact pom.
 	 * 
 	 * @return The file extension (without leading period) or <code>null</code> if none.
 	 */

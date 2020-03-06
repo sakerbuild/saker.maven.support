@@ -27,8 +27,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
@@ -41,6 +44,7 @@ import saker.build.task.TaskContext;
 import saker.build.task.TaskFactory;
 import saker.build.task.identifier.TaskIdentifier;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.dependency.MavenDependencyResolutionTaskOutput;
 import saker.maven.support.api.dependency.ResolvedDependencyArtifact;
@@ -48,9 +52,12 @@ import saker.maven.support.impl.ArtifactUtils;
 import saker.maven.support.impl.BugFixDefaultModelBuilderFactory;
 import saker.maven.support.impl.MavenImplUtils;
 import saker.maven.support.impl.SakerFileModelSource;
+import saker.maven.support.impl.dependency.option.ExclusionOption;
+import saker.maven.support.impl.dependency.option.MavenDependencyOption;
 import saker.maven.support.thirdparty.org.apache.maven.model.Model;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.DefaultModelBuildingRequest;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuilder;
+import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuildingException;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuildingRequest;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuildingResult;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelProblemCollector;
@@ -70,6 +77,8 @@ import saker.maven.support.thirdparty.org.eclipse.aether.graph.Exclusion;
 import saker.maven.support.thirdparty.org.eclipse.aether.impl.DefaultServiceLocator;
 import saker.maven.support.thirdparty.org.eclipse.aether.repository.LocalRepository;
 import saker.maven.support.thirdparty.org.eclipse.aether.repository.RemoteRepository;
+import saker.maven.support.thirdparty.org.eclipse.aether.resolution.ArtifactRequest;
+import saker.maven.support.thirdparty.org.eclipse.aether.resolution.ArtifactResult;
 
 public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 		implements TaskFactory<MavenDependencyResolutionTaskOutput>, Task<MavenDependencyResolutionTaskOutput>,
@@ -99,6 +108,77 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 				DefaultRepositorySystemSession reposession) throws Exception;
 	}
 
+	protected MavenDependencyResolutionTaskOutput resolveArtifactDependencies(TaskContext taskcontext,
+			Map<? extends ArtifactCoordinates, ? extends MavenDependencyOption> coordinates) throws Exception {
+		return resolveDependencies(taskcontext, (repositories, reposystem, reposession) -> {
+			List<Dependency> collectdependencies = new ArrayList<>();
+			Map<ArtifactCoordinates, ArtifactRequest> pomrequests = getNoExtensionPomArtifactRequests(coordinates,
+					repositories);
+			Map<ArtifactCoordinates, ArtifactResult> pomresults = null;
+			if (!ObjectUtils.isNullOrEmpty(pomrequests)) {
+				List<ArtifactResult> resolutionresults = reposystem.resolveArtifacts(reposession, pomrequests.values());
+				pomresults = new HashMap<>();
+				Map<ArtifactRequest, ArtifactCoordinates> requestpoms = new HashMap<>();
+				for (Entry<ArtifactCoordinates, ArtifactRequest> entry : pomrequests.entrySet()) {
+					requestpoms.put(entry.getValue(), entry.getKey());
+				}
+				for (ArtifactResult res : resolutionresults) {
+					ArtifactRequest request = res.getRequest();
+					pomresults.put(requestpoms.get(request), res);
+				}
+			}
+			for (Entry<? extends ArtifactCoordinates, ? extends MavenDependencyOption> entry : coordinates.entrySet()) {
+				ArtifactCoordinates acoords = entry.getKey();
+				if (ObjectUtils.isNullOrEmpty(acoords.getExtension())) {
+					ArtifactResult pomresolutionresult = pomresults.get(acoords);
+
+					//retrieve the packaging from the model as the extension
+					DefaultModelBuildingRequest buildrequest = new DefaultModelBuildingRequest();
+					File pomfile = pomresolutionresult.getArtifact().getFile();
+					buildrequest.setPomFile(pomfile);
+					Model model = buildSimpleModel(buildrequest);
+					acoords = new ArtifactCoordinates(acoords.getGroupId(), acoords.getArtifactId(),
+							acoords.getClassifier(), model.getPackaging(), acoords.getVersion());
+				}
+				Artifact artifact = ArtifactUtils.toArtifact(acoords);
+				MavenDependencyOption depoption = entry.getValue();
+				String scope = depoption.getScope();
+				Set<Exclusion> depexclusions;
+				Collection<? extends ExclusionOption> exclusions = depoption.getExclusions();
+				if (!ObjectUtils.isNullOrEmpty(exclusions)) {
+					depexclusions = new LinkedHashSet<>();
+					for (ExclusionOption excloption : exclusions) {
+						if (excloption == null) {
+							continue;
+						}
+						depexclusions.add(MavenImplUtils.toExclusion(excloption));
+					}
+				} else {
+					depexclusions = Collections.emptySet();
+				}
+				Dependency dep = new Dependency(artifact, scope, depoption.getOptional(), depexclusions);
+
+				collectdependencies.add(dep);
+			}
+			return dependenciesToCollectRequest(collectdependencies, repositories);
+		});
+	}
+
+	private static Map<ArtifactCoordinates, ArtifactRequest> getNoExtensionPomArtifactRequests(
+			Map<? extends ArtifactCoordinates, ? extends MavenDependencyOption> coordinates,
+			List<RemoteRepository> repositories) {
+		Map<ArtifactCoordinates, ArtifactRequest> pomrequest = new HashMap<>();
+		for (Entry<? extends ArtifactCoordinates, ? extends MavenDependencyOption> entry : coordinates.entrySet()) {
+			ArtifactCoordinates acoords = entry.getKey();
+			if (ObjectUtils.isNullOrEmpty(acoords.getExtension())) {
+				ArtifactRequest artrequest = new ArtifactRequest(new DefaultArtifact(acoords.getGroupId(),
+						acoords.getArtifactId(), "", "pom", acoords.getVersion()), repositories, null);
+				pomrequest.put(acoords, artrequest);
+			}
+		}
+		return pomrequest;
+	}
+
 	protected MavenDependencyResolutionTaskOutput resolvePomDependencies(TaskContext taskcontext, SakerFile pomfile)
 			throws Exception {
 		return resolveDependencies(taskcontext, (repositories, reposystem, reposession) -> {
@@ -106,26 +186,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 					.setModelSource(new SakerFileModelSource(taskcontext, pomfile))
 					.setModelResolver(new ReimplementedDefaultModelResolver(repositories, reposystem, reposession));
 
-			ModelBuilder modelbuilder = new BugFixDefaultModelBuilderFactory() {
-				@Override
-				protected ModelLocator newModelLocator() {
-					return new DefaultModelLocator() {
-						@Override
-						public File locatePom(File projectDirectory) {
-							throw new UnsupportedOperationException(
-									"Internal error: ModelLocator.locatePom(File) is unsupported.");
-						}
-					};
-				}
-
-				@Override
-				protected ModelValidator newModelValidator() {
-					return new NonDependencyClearingModelValidator();
-				}
-
-			}.newInstance();
-			ModelBuildingResult modelbuildresult = modelbuilder.build(modelbuildrequest);
-			Model model = modelbuildresult.getEffectiveModel();
+			Model model = buildSimpleModel(modelbuildrequest);
 
 			List<saker.maven.support.thirdparty.org.apache.maven.model.Dependency> modeldependencies = model
 					.getDependencies();
@@ -142,7 +203,6 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 					collectexclusions = new LinkedHashSet<>();
 					for (saker.maven.support.thirdparty.org.apache.maven.model.Exclusion ex : modelexclusions) {
 						collectexclusions.add(new Exclusion(ex.getGroupId(), ex.getArtifactId(), "*", "*"));
-
 					}
 				} else {
 					collectexclusions = Collections.emptySet();
@@ -155,6 +215,30 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 			return dependenciesToCollectRequest(collectdependencies, repositories);
 		});
 
+	}
+
+	private static Model buildSimpleModel(ModelBuildingRequest modelbuildrequest) throws ModelBuildingException {
+		ModelBuilder modelbuilder = new BugFixDefaultModelBuilderFactory() {
+			@Override
+			protected ModelLocator newModelLocator() {
+				return new DefaultModelLocator() {
+					@Override
+					public File locatePom(File projectDirectory) {
+						throw new UnsupportedOperationException(
+								"Internal error: ModelLocator.locatePom(File) is unsupported.");
+					}
+				};
+			}
+
+			@Override
+			protected ModelValidator newModelValidator() {
+				return new NonDependencyClearingModelValidator();
+			}
+
+		}.newInstance();
+		ModelBuildingResult modelbuildresult = modelbuilder.build(modelbuildrequest);
+		Model model = modelbuildresult.getEffectiveModel();
+		return model;
 	}
 
 	//suppress the unused FileLock warning
@@ -221,12 +305,6 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 		return result;
 	}
 
-	protected MavenDependencyResolutionTaskOutput resolveDependencies(TaskContext taskcontext,
-			List<Dependency> collectdependencies) throws Exception {
-		return resolveDependencies(taskcontext, (repositories, reposystem,
-				reposession) -> dependenciesToCollectRequest(collectdependencies, repositories));
-	}
-
 	private static CollectRequest dependenciesToCollectRequest(List<Dependency> collectdependencies,
 			List<RemoteRepository> repositories) {
 		CollectRequest collectrequest = new CollectRequest();
@@ -276,7 +354,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 		return getClass().getSimpleName() + "[]";
 	}
 
-	private static final class NonDependencyClearingModelValidator implements ModelValidator {
+	protected static final class NonDependencyClearingModelValidator implements ModelValidator {
 		@Override
 		public void validateRawModel(Model model, ModelBuildingRequest arg1, ModelProblemCollector arg2) {
 			clearNonDependenciesFromModel(model);
