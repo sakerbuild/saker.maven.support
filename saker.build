@@ -1,4 +1,4 @@
-global(VERSION_saker.maven.support) = "0.8.4"
+global(VERSION_saker.maven.support) = "0.8.5"
 
 static(VERSION_saker.build) = nest.dependency.resolve(
 	saker.build,
