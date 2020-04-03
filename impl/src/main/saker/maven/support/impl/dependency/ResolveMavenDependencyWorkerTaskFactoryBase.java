@@ -133,7 +133,8 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 					ArtifactResult pomresolutionresult = pomresults.get(acoords);
 
 					//retrieve the packaging from the model as the extension
-					DefaultModelBuildingRequest buildrequest = new DefaultModelBuildingRequest();
+					DefaultModelBuildingRequest buildrequest = createModelBuildingRequest(repositories, reposystem,
+							reposession);
 					File pomfile = pomresolutionresult.getArtifact().getFile();
 					buildrequest.setPomFile(pomfile);
 					Model model = buildSimpleModel(buildrequest);
@@ -182,9 +183,8 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 	protected MavenDependencyResolutionTaskOutput resolvePomDependencies(TaskContext taskcontext, SakerFile pomfile)
 			throws Exception {
 		return resolveDependencies(taskcontext, (repositories, reposystem, reposession) -> {
-			DefaultModelBuildingRequest modelbuildrequest = new DefaultModelBuildingRequest()
-					.setModelSource(new SakerFileModelSource(taskcontext, pomfile))
-					.setModelResolver(new ReimplementedDefaultModelResolver(repositories, reposystem, reposession));
+			DefaultModelBuildingRequest modelbuildrequest = createModelBuildingRequest(repositories, reposystem,
+					reposession).setModelSource(new SakerFileModelSource(taskcontext, pomfile));
 
 			Model model = buildSimpleModel(modelbuildrequest);
 
@@ -215,6 +215,12 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 			return dependenciesToCollectRequest(collectdependencies, repositories);
 		});
 
+	}
+
+	private static DefaultModelBuildingRequest createModelBuildingRequest(List<RemoteRepository> repositories,
+			RepositorySystem reposystem, DefaultRepositorySystemSession reposession) {
+		return new DefaultModelBuildingRequest()
+				.setModelResolver(new ReimplementedDefaultModelResolver(repositories, reposystem, reposession));
 	}
 
 	private static Model buildSimpleModel(ModelBuildingRequest modelbuildrequest) throws ModelBuildingException {
