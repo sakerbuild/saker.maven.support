@@ -17,6 +17,7 @@ package saker.maven.support.main.configuration.option;
 
 import java.util.Objects;
 
+import saker.maven.support.api.MavenOperationConfiguration.RepositoryPolicyConfiguration;
 import saker.maven.support.impl.MavenImplUtils;
 import saker.maven.support.main.TaskDocs.DocChecksumPolicy;
 import saker.maven.support.main.TaskDocs.DocUpdatePolicy;
@@ -53,8 +54,6 @@ public interface RepositoryPolicyTaskOption {
 
 	public String getChecksumPolicy();
 
-	//TODO handle RepositoryPolicyConfiguration input
-	
 	public static RepositoryPolicyTaskOption valueOf(String str) {
 		Objects.requireNonNull(str, "string");
 		if (!str.equalsIgnoreCase("false")) {
@@ -77,5 +76,27 @@ public interface RepositoryPolicyTaskOption {
 			}
 		}
 		return new DisabledRepositoryPolicyOptions();
+	}
+
+	public static RepositoryPolicyTaskOption valueOf(RepositoryPolicyConfiguration input) {
+		if (input == null) {
+			return null;
+		}
+		return new RepositoryPolicyTaskOption() {
+			@Override
+			public Boolean getEnabled() {
+				return input.getEnabled();
+			}
+
+			@Override
+			public String getUpdatePolicy() {
+				return input.getUpdatePolicy();
+			}
+
+			@Override
+			public String getChecksumPolicy() {
+				return input.getChecksumPolicy();
+			}
+		};
 	}
 }

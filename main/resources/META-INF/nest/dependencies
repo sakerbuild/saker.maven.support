@@ -1,2 +1,4 @@
 saker.maven.support-api
 	classpath: [0)
+saker.standard-api
+	classpath: [0)

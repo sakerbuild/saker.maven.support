@@ -33,6 +33,9 @@ public abstract class AuthenticationTaskOption {
 	public abstract AuthenticationConfiguration create();
 
 	public static AuthenticationTaskOption valueOf(AuthenticationConfiguration config) {
+		if (config == null) {
+			return null;
+		}
 		return new AuthenticationTaskOption() {
 			@Override
 			public AuthenticationConfiguration create() {

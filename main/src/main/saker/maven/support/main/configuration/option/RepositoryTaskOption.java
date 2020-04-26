@@ -15,6 +15,7 @@
  */
 package saker.maven.support.main.configuration.option;
 
+import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 import saker.maven.support.main.TaskDocs.DocRepositoryLayout;
 import saker.nest.scriptinfo.reflection.annot.NestFieldInformation;
 import saker.nest.scriptinfo.reflection.annot.NestInformation;
@@ -62,5 +63,37 @@ public interface RepositoryTaskOption {
 
 	public AuthenticationTaskOption getAuthentication();
 
-	//TODO handle RepositoryConfiguration
+	public static RepositoryTaskOption valueOf(RepositoryConfiguration input) {
+		return new RepositoryTaskOption() {
+			@Override
+			public String getUrl() {
+				return input.getUrl();
+			}
+
+			@Override
+			public RepositoryPolicyTaskOption getSnapshots() {
+				return RepositoryPolicyTaskOption.valueOf(input.getSnapshots());
+			}
+
+			@Override
+			public RepositoryPolicyTaskOption getReleases() {
+				return RepositoryPolicyTaskOption.valueOf(input.getReleases());
+			}
+
+			@Override
+			public String getLayout() {
+				return input.getLayout();
+			}
+
+			@Override
+			public String getId() {
+				return input.getId();
+			}
+
+			@Override
+			public AuthenticationTaskOption getAuthentication() {
+				return AuthenticationTaskOption.valueOf(input.getAuthentication());
+			}
+		};
+	}
 }

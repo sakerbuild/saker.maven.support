@@ -355,11 +355,6 @@ public class TaskDocs {
 	}
 
 	@NestTypeInformation(qualifiedName = "SakerPath")
-	@NestInformation("Local file system path to a Maven repository.")
-	public static class DocLocalRepositoryPath {
-	}
-
-	@NestTypeInformation(qualifiedName = "SakerPath")
 	@NestInformation("Execution path to a Maven pom.xml.")
 	public static class DocMavenPomPath {
 	}

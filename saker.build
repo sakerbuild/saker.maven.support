@@ -24,6 +24,10 @@ compile(
 				"saker.build-api-v{ static(VERSION_saker.build) }",
 				"saker.nest-api-v{ static(VERSION_saker.nest) }"
 			]),
+			saker.java.classpath.bundle(nest.dependency.resolve(
+				saker.standard-api, 
+				Filters: nest.dependency.filter.compile(CompileTransitive: false))
+			),
 		],
 		Identifier: saker.maven.support,
 	)

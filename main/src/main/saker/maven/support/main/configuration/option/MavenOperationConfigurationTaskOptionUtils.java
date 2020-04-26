@@ -41,7 +41,10 @@ public class MavenOperationConfigurationTaskOptionUtils {
 
 	static MavenOperationConfiguration createConfigurationImpl(MavenConfigurationTaskOption options) {
 		MavenOperationConfiguration.Builder builder = MavenOperationConfiguration.builder();
-		builder.setLocalRepositoryPath(options.getLocalRepositoryPath());
+		LocalRepositoryPathTaskOption localrepopathoption = options.getLocalRepositoryPath();
+		if (localrepopathoption != null) {
+			builder.setLocalRepositoryPath(localrepopathoption.getPath());
+		}
 		Collection<RepositoryTaskOption> repos = options.getRepositories();
 		if (repos != null) {
 			Set<RepositoryConfiguration> repoconfigs = new LinkedHashSet<>();

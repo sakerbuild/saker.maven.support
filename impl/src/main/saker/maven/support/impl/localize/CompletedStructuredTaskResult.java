@@ -23,6 +23,8 @@ import java.io.ObjectOutput;
 import saker.build.task.TaskResultResolver;
 import saker.build.task.utils.StructuredTaskResult;
 
+//TODO use StructuredTaskResult.createLiteral
+@Deprecated
 public class CompletedStructuredTaskResult implements StructuredTaskResult, Externalizable {
 	private static final long serialVersionUID = 1L;
 
