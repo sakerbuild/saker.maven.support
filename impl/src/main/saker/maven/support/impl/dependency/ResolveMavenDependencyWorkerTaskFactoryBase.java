@@ -24,10 +24,12 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,7 @@ import saker.build.task.TaskContext;
 import saker.build.task.TaskFactory;
 import saker.build.task.identifier.TaskIdentifier;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.build.trace.BuildTrace;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.dependency.MavenDependencyResolutionTaskOutput;
@@ -274,7 +277,21 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 
 		reposession.setReadOnly();
 
-		Collection<ResolvedDependencyArtifact> entries = new LinkedHashSet<>();
+		Set<ResolvedDependencyArtifact> entries = new LinkedHashSet<>();
+
+		ArrayDeque<Map<String, Object>> buildTraceDependencyScope;
+		Map<String, Object> buildtracevalues;
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			buildtracevalues = new LinkedHashMap<>();
+			buildTraceDependencyScope = new ArrayDeque<>();
+			Map<String, Object> depsmap = new LinkedHashMap<>();
+			buildTraceDependencyScope.addLast(depsmap);
+
+			buildtracevalues.put("Dependencies", depsmap);
+		} else {
+			buildtracevalues = null;
+			buildTraceDependencyScope = null;
+		}
 
 		synchronized (MavenImplUtils.getLocalRepositoryAccessSyncLock(lockfilepath)) {
 			try (FileChannel lockchannel = FileChannel.open(lockfilelocalpath, StandardOpenOption.CREATE,
@@ -283,9 +300,13 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 				CollectRequest collectrequest = collectrequestsupplier.get(repositories, reposystem, reposession);
 				CollectResult collectdeps = reposystem.collectDependencies(reposession, collectrequest);
 				DependencyNode rootdepnode = collectdeps.getRoot();
+
 				rootdepnode.accept(new DependencyVisitor() {
 					@Override
 					public boolean visitLeave(DependencyNode node) {
+						if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+							buildTraceDependencyScope.removeLast();
+						}
 						return true;
 					}
 
@@ -298,13 +319,31 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 						}
 						Artifact artifact = node.getArtifact();
 						if (artifact != null) {
-							entries.add(new ResolvedDependencyArtifactImpl(
-									ArtifactUtils.toArtifactCoordinates(artifact), dependency.getScope(), config));
+							Map<String, Object> parentmap;
+							Map<String, Object> ourmap;
+							if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+								parentmap = buildTraceDependencyScope.peekLast();
+								ourmap = new LinkedHashMap<>();
+								buildTraceDependencyScope.addLast(ourmap);
+							} else {
+								parentmap = null;
+								ourmap = null;
+							}
+
+							ArtifactCoordinates coords = ArtifactUtils.toArtifactCoordinates(artifact);
+							String scope = dependency.getScope();
+							if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+								parentmap.put(coords.toString() + ":" + scope, ourmap);
+							}
+							entries.add(new ResolvedDependencyArtifactImpl(coords, scope, config));
 						}
 						return true;
 					}
 				});
 			}
+		}
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			BuildTrace.setValues(buildtracevalues, BuildTrace.VALUE_CATEGORY_TASK);
 		}
 
 		MavenDependencyResolutionTaskOutputImpl result = new MavenDependencyResolutionTaskOutputImpl(config, entries);

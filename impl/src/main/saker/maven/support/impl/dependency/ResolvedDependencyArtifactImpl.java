@@ -54,6 +54,7 @@ public class ResolvedDependencyArtifactImpl implements ResolvedDependencyArtifac
 		return scope;
 	}
 
+	@Override
 	public MavenOperationConfiguration getConfiguration() {
 		return configuration;
 	}

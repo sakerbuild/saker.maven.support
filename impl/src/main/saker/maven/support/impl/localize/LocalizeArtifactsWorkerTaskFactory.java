@@ -47,6 +47,7 @@ import saker.build.task.utils.StructuredTaskResult;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
+import saker.build.trace.BuildTrace;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.localize.ArtifactLocalizationTaskOutput;
@@ -95,6 +96,13 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 	@Override
 	public ArtifactLocalizationTaskOutput run(TaskContext taskcontext) throws Exception {
 		taskcontext.setStandardOutDisplayIdentifier(LocalizeArtifactsTaskFactory.TASK_NAME);
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			if (!ObjectUtils.isNullOrEmpty(artifacts)) {
+				Map<String, Object> valmap = new LinkedHashMap<>();
+				valmap.put("Artifacts", artifacts.stream().map(Object::toString).toArray());
+				BuildTrace.setValues(valmap, BuildTrace.VALUE_CATEGORY_TASK);
+			}
+		}
 
 		MavenOperationConfiguration config = this.configuration;
 		List<RemoteRepository> repositories = MavenImplUtils.createRemoteRepositories(config);

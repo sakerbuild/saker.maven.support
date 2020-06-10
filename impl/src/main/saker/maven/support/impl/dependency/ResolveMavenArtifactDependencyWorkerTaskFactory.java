@@ -19,29 +19,15 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import saker.build.task.TaskContext;
-import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.dependency.MavenDependencyResolutionTaskOutput;
-import saker.maven.support.impl.ArtifactUtils;
-import saker.maven.support.impl.MavenImplUtils;
-import saker.maven.support.impl.dependency.option.ExclusionOption;
 import saker.maven.support.impl.dependency.option.MavenDependencyOption;
 import saker.maven.support.main.dependency.ResolveMavenDependencyTaskFactory;
-import saker.maven.support.thirdparty.org.eclipse.aether.artifact.Artifact;
-import saker.maven.support.thirdparty.org.eclipse.aether.graph.Dependency;
-import saker.maven.support.thirdparty.org.eclipse.aether.graph.Exclusion;
 
 public class ResolveMavenArtifactDependencyWorkerTaskFactory extends ResolveMavenDependencyWorkerTaskFactoryBase {
 	private static final long serialVersionUID = 1L;
