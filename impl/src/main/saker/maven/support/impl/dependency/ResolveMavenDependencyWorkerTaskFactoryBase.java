@@ -59,6 +59,7 @@ import saker.maven.support.impl.dependency.option.ExclusionOption;
 import saker.maven.support.impl.dependency.option.MavenDependencyOption;
 import saker.maven.support.thirdparty.org.apache.maven.model.Model;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.DefaultModelBuildingRequest;
+import saker.maven.support.thirdparty.org.apache.maven.model.building.FileModelSource;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuilder;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuildingException;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelBuildingRequest;
@@ -136,10 +137,13 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 					ArtifactResult pomresolutionresult = pomresults.get(acoords);
 
 					//retrieve the packaging from the model as the extension
-					DefaultModelBuildingRequest buildrequest = createModelBuildingRequest(repositories, reposystem,
-							reposession);
 					File pomfile = pomresolutionresult.getArtifact().getFile();
-					buildrequest.setPomFile(pomfile);
+					DefaultModelBuildingRequest buildrequest = createModelBuildingRequest(repositories, reposystem,
+							reposession).setModelSource(new FileModelSource(pomfile));
+					//NOTE: dont call .setPomFile(pomfile);
+					//That makes the model builder operate in project mode and may report some errors like:
+//					[saker.maven.resolve][[ERROR] Malformed POM c:\Users\sipka\.m2\repository\io\gsonfire\gson-fire\1.8.0\gson-fire-1.8.0.pom: Unrecognised tag: 'organizationUrl' (position: START_TAG seen ...</email>\n            <organizationUrl>... @29:30)  @ c:\Users\sipka\.m2\repository\io\gsonfire\gson-fire\1.8.0\gson-fire-1.8.0.pom, line 29, column 30]
+//					[saker.maven.resolve][[ERROR] Malformed POM c:\Users\sipka\.m2\repository\org\threeten\threetenbp\1.3.5\threetenbp-1.3.5.pom: Unrecognised tag: 'organization' (position: START_TAG seen ...</url>\r\n  </scm>\r\n  <organization>... @90:17)  @ c:\Users\sipka\.m2\repository\org\threeten\threetenbp\1.3.5\threetenbp-1.3.5.pom, line 90, column 17]
 					Model model = buildSimpleModel(buildrequest);
 					acoords = new ArtifactCoordinates(acoords.getGroupId(), acoords.getArtifactId(),
 							acoords.getClassifier(), model.getPackaging(), acoords.getVersion());
@@ -222,8 +226,9 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 
 	private static DefaultModelBuildingRequest createModelBuildingRequest(List<RemoteRepository> repositories,
 			RepositorySystem reposystem, DefaultRepositorySystemSession reposession) {
-		return new DefaultModelBuildingRequest()
-				.setModelResolver(new ReimplementedDefaultModelResolver(repositories, reposystem, reposession));
+		DefaultModelBuildingRequest result = new DefaultModelBuildingRequest();
+		result.setModelResolver(new ReimplementedDefaultModelResolver(repositories, reposystem, reposession));
+		return result;
 	}
 
 	private static Model buildSimpleModel(ModelBuildingRequest modelbuildrequest) throws ModelBuildingException {
