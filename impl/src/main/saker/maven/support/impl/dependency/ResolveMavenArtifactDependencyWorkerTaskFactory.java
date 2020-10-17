@@ -19,13 +19,21 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import saker.build.task.TaskContext;
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
+import saker.build.trace.BuildTrace;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.dependency.MavenDependencyResolutionTaskOutput;
+import saker.maven.support.impl.MavenImplUtils;
+import saker.maven.support.impl.dependency.option.ExclusionOption;
 import saker.maven.support.impl.dependency.option.MavenDependencyOption;
 import saker.maven.support.main.dependency.ResolveMavenDependencyTaskFactory;
 
@@ -50,6 +58,39 @@ public class ResolveMavenArtifactDependencyWorkerTaskFactory extends ResolveMave
 	@Override
 	public MavenDependencyResolutionTaskOutput run(TaskContext taskcontext) throws Exception {
 		taskcontext.setStandardOutDisplayIdentifier(ResolveMavenDependencyTaskFactory.TASK_NAME);
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			BuildTrace.runWithBuildTrace(() -> {
+				MavenImplUtils.reportConfgurationBuildTraceWithBuildTrace(configuration);
+				if (!ObjectUtils.isNullOrEmpty(coordinates)) {
+					LinkedHashMap<Object, Object> depsmap = new LinkedHashMap<>();
+					for (Entry<? extends ArtifactCoordinates, ? extends MavenDependencyOption> entry : coordinates
+							.entrySet()) {
+						MavenDependencyOption depoption = entry.getValue();
+
+						StringBuilder sb = new StringBuilder();
+						sb.append(entry.getKey().toString());
+						sb.append("\t");
+						sb.append(depoption.getScope());
+						if (Boolean.TRUE.equals(depoption.getOptional())) {
+							//? to signal that it is optional
+							sb.append('?');
+						}
+						String title = sb.toString();
+						LinkedHashMap<Object, Object> depprops = new LinkedHashMap<>();
+
+						Set<? extends ExclusionOption> exclusions = depoption.getExclusions();
+						if (!ObjectUtils.isNullOrEmpty(exclusions)) {
+							depprops.put("Exclusions", exclusions.stream().map(ExclusionOption::toString).toArray());
+						}
+						depsmap.put(title, depprops);
+					}
+
+					BuildTrace.setValues(Collections.singletonMap("Dependencies", depsmap),
+							BuildTrace.VALUE_CATEGORY_TASK);
+				}
+			});
+		}
+
 		return resolveArtifactDependencies(taskcontext, coordinates);
 	}
 

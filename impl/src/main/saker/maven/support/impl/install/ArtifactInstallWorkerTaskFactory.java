@@ -94,6 +94,7 @@ public class ArtifactInstallWorkerTaskFactory
 	@Override
 	public ArtifactInstallWorkerTaskOutput run(TaskContext taskcontext) throws Exception {
 		taskcontext.setStandardOutDisplayIdentifier(InstallArtifactsTaskFactory.TASK_NAME);
+		MavenImplUtils.reportConfgurationBuildTrace(configuration);
 
 		SakerFile artifactfile = artifactPath == null ? null
 				: taskcontext.getTaskUtilities().resolveFileAtPath(artifactPath);
@@ -149,7 +150,8 @@ public class ArtifactInstallWorkerTaskFactory
 					String localpath = reposession.getLocalRepositoryManager().getPathForLocalArtifact(artifact);
 					installresultartifactpath = repositorybasedir.resolve(localpath);
 					taskcontext.getTaskUtilities().getReportExecutionDependency(
-							SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(installresultartifactpath, cduniqueness));
+							SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(
+									installresultartifactpath, cduniqueness));
 				}
 			}
 		}

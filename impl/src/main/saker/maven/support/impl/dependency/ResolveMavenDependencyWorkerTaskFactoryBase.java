@@ -89,7 +89,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 		Externalizable, TaskIdentifier {
 	private static final long serialVersionUID = 1L;
 
-	private MavenOperationConfiguration operationConfiguration;
+	protected MavenOperationConfiguration configuration;
 
 	/**
 	 * For {@link Externalizable}.
@@ -99,7 +99,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 
 	public ResolveMavenDependencyWorkerTaskFactoryBase(MavenOperationConfiguration config) {
 		Objects.requireNonNull(config, "maven operation configuration");
-		this.operationConfiguration = config;
+		this.configuration = config;
 	}
 
 	@Override
@@ -259,7 +259,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 	@SuppressWarnings("try")
 	protected MavenDependencyResolutionTaskOutput resolveDependencies(TaskContext taskcontext,
 			LockedRepositoryOperationSupplier<CollectRequest> collectrequestsupplier) throws Exception {
-		MavenOperationConfiguration config = operationConfiguration;
+		MavenOperationConfiguration config = configuration;
 
 		List<RemoteRepository> repositories = MavenImplUtils.createRemoteRepositories(config);
 
@@ -292,7 +292,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 			Map<String, Object> depsmap = new LinkedHashMap<>();
 			buildTraceDependencyScope.addLast(depsmap);
 
-			buildtracevalues.put("Dependencies", depsmap);
+			buildtracevalues.put("Resolved artifacts", depsmap);
 		} else {
 			buildtracevalues = null;
 			buildTraceDependencyScope = null;
@@ -309,7 +309,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 				rootdepnode.accept(new DependencyVisitor() {
 					@Override
 					public boolean visitLeave(DependencyNode node) {
-						if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+						if (buildTraceDependencyScope != null) {
 							buildTraceDependencyScope.removeLast();
 						}
 						return true;
@@ -326,7 +326,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 						if (artifact != null) {
 							Map<String, Object> parentmap;
 							Map<String, Object> ourmap;
-							if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+							if (buildTraceDependencyScope != null) {
 								parentmap = buildTraceDependencyScope.peekLast();
 								ourmap = new LinkedHashMap<>();
 								buildTraceDependencyScope.addLast(ourmap);
@@ -337,7 +337,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 
 							ArtifactCoordinates coords = ArtifactUtils.toArtifactCoordinates(artifact);
 							String scope = dependency.getScope();
-							if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+							if (buildTraceDependencyScope != null) {
 								parentmap.put(coords.toString() + ":" + scope, ourmap);
 							}
 							entries.add(new ResolvedDependencyArtifactImpl(coords, scope, config));
@@ -347,7 +347,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 				});
 			}
 		}
-		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+		if (buildtracevalues != null) {
 			BuildTrace.setValues(buildtracevalues, BuildTrace.VALUE_CATEGORY_TASK);
 		}
 
@@ -366,19 +366,19 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(operationConfiguration);
+		out.writeObject(configuration);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		operationConfiguration = (MavenOperationConfiguration) in.readObject();
+		configuration = (MavenOperationConfiguration) in.readObject();
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((operationConfiguration == null) ? 0 : operationConfiguration.hashCode());
+		result = prime * result + ((configuration == null) ? 0 : configuration.hashCode());
 		return result;
 	}
 
@@ -391,10 +391,10 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 		if (getClass() != obj.getClass())
 			return false;
 		ResolveMavenDependencyWorkerTaskFactoryBase other = (ResolveMavenDependencyWorkerTaskFactoryBase) obj;
-		if (operationConfiguration == null) {
-			if (other.operationConfiguration != null)
+		if (configuration == null) {
+			if (other.configuration != null)
 				return false;
-		} else if (!operationConfiguration.equals(other.operationConfiguration))
+		} else if (!configuration.equals(other.configuration))
 			return false;
 		return true;
 	}

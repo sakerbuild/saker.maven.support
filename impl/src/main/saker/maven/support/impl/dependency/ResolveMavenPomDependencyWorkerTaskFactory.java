@@ -20,13 +20,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Objects;
 
 import saker.build.file.SakerFile;
 import saker.build.file.path.SakerPath;
 import saker.build.task.CommonTaskContentDescriptors;
 import saker.build.task.TaskContext;
+import saker.build.trace.BuildTrace;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.dependency.MavenDependencyResolutionTaskOutput;
+import saker.maven.support.impl.MavenImplUtils;
 import saker.maven.support.main.dependency.ResolveMavenDependencyTaskFactory;
 
 public class ResolveMavenPomDependencyWorkerTaskFactory extends ResolveMavenDependencyWorkerTaskFactoryBase {
@@ -48,6 +52,11 @@ public class ResolveMavenPomDependencyWorkerTaskFactory extends ResolveMavenDepe
 	@Override
 	public MavenDependencyResolutionTaskOutput run(TaskContext taskcontext) throws Exception {
 		taskcontext.setStandardOutDisplayIdentifier(ResolveMavenDependencyTaskFactory.TASK_NAME);
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			BuildTrace.setValues(Collections.singletonMap("Pom", Objects.toString(pomPath, null)),
+					BuildTrace.VALUE_CATEGORY_TASK);
+			MavenImplUtils.reportConfgurationBuildTrace(configuration);
+		}
 
 		SakerFile pomfile = taskcontext.getTaskUtilities().resolveFileAtPath(pomPath);
 		if (pomfile == null) {

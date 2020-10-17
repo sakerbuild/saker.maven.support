@@ -21,8 +21,10 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import saker.build.file.SakerFile;
@@ -31,6 +33,7 @@ import saker.build.file.provider.LocalFileProvider;
 import saker.build.runtime.execution.SakerLog;
 import saker.build.task.TaskContext;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.build.trace.BuildTrace;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.AccountAuthenticationConfiguration;
@@ -107,6 +110,110 @@ public class MavenImplUtils {
 			return result;
 		}
 		return MavenUtils.getDefaultMavenLocalRepositoryLocation(taskcontext);
+	}
+
+	public static void reportConfgurationBuildTrace(MavenOperationConfiguration config) {
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND < 8_006) {
+			return;
+		}
+		BuildTrace.runWithBuildTrace(() -> {
+			reportConfgurationBuildTraceWithBuildTrace(config);
+		});
+	}
+
+	public static void reportConfgurationBuildTraceWithBuildTrace(MavenOperationConfiguration config) {
+		//use exceptions to signal configuration errors
+		if (config == null) {
+			BuildTrace.setValues(
+					Collections.singletonMap("Maven configuration",
+							new NullPointerException("No Maven configuration was specified.")),
+					BuildTrace.VALUE_CATEGORY_TASK);
+			return;
+		}
+
+		LinkedHashMap<Object, Object> props = new LinkedHashMap<>();
+		SakerPath localrepopath = config.getLocalRepositoryPath();
+		if (localrepopath == null) {
+			props.put("Repository local path",
+					new NullPointerException("No Maven local repository path was specified."));
+		} else {
+			props.put("Repository local path", localrepopath.toString());
+		}
+		Set<? extends RepositoryConfiguration> repos = config.getRepositories();
+		if (repos == null) {
+			props.put("Remote repositories",
+					new NullPointerException("Missing Maven remote repositories configuration."));
+		} else {
+			Map<String, Object> reposlist = new LinkedHashMap<>();
+			for (RepositoryConfiguration repo : repos) {
+				String id = repo.getId();
+				String url = repo.getUrl();
+				String title;
+				if (id == null) {
+					title = url;
+				} else {
+					title = id + "\t" + url;
+				}
+				Map<Object, Object> repoprops = createRepositoryConfigurationBuildTrace(repo);
+				if (reposlist.putIfAbsent(title, repoprops) != null) {
+					//already present with same title?! add with modified title
+					int i = 2;
+					while (true) {
+						String ntitle = "(" + i + ") " + title;
+						if (reposlist.putIfAbsent(ntitle, repoprops) == null) {
+							break;
+						}
+						++i;
+					}
+
+				}
+			}
+			props.put("Remote repositories", reposlist);
+		}
+		BuildTrace.setValues(Collections.singletonMap("Maven configuration", props), BuildTrace.VALUE_CATEGORY_TASK);
+	}
+
+	public static Map<Object, Object> createRepositoryConfigurationBuildTrace(RepositoryConfiguration repo) {
+		LinkedHashMap<Object, Object> repoprops = new LinkedHashMap<>();
+		repoprops.put("Layout", repo.getLayout());
+		addRepositoryPolicyBuildTrace(repo.getSnapshotPolicy(), "Snapshot policy", repoprops);
+		addRepositoryPolicyBuildTrace(repo.getReleasePolicy(), "Release policy", repoprops);
+		addRepositoryAuthenticationBuildTrace(repo.getAuthentication(), repoprops);
+		return repoprops;
+	}
+
+	private static void addRepositoryAuthenticationBuildTrace(AuthenticationConfiguration authentication,
+			LinkedHashMap<Object, Object> repoprops) {
+		if (authentication == null) {
+			return;
+		}
+		authentication.accept(new AuthenticationConfiguration.Visitor() {
+			@Override
+			public void visit(PrivateKeyAuthenticationConfiguration config) {
+				repoprops.put("Authentication", "Private key");
+			}
+
+			@Override
+			public void visit(AccountAuthenticationConfiguration config) {
+				repoprops.put("Authentication", "Username + password");
+			}
+		});
+	}
+
+	private static void addRepositoryPolicyBuildTrace(RepositoryPolicyConfiguration policy, String name,
+			LinkedHashMap<Object, Object> repoprops) {
+		if (policy == null) {
+			repoprops.put(name, "default");
+			return;
+		}
+		if (!policy.isEnabled()) {
+			repoprops.put(name, "disabled");
+			return;
+		}
+		LinkedHashMap<Object, Object> props = new LinkedHashMap<>();
+		props.put("Update policy", policy.getUpdatePolicy());
+		props.put("Checksum policy", policy.getChecksumPolicy());
+		repoprops.put(name, props);
 	}
 
 	public static DefaultServiceLocator getDefaultServiceLocator() {

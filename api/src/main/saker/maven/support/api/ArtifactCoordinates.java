@@ -19,11 +19,13 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.build.thirdparty.saker.util.StringUtils;
 
 /**
  * Represents the coordinates of a Maven artifact.
@@ -46,15 +48,49 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 public final class ArtifactCoordinates implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
+	private static final Comparator<ArtifactCoordinates> COMPARATOR_INSTANCE = (l, r) -> {
+		if (l == null) {
+			if (r == null) {
+				return 0;
+			}
+			return -1;
+		}
+		if (r == null) {
+			return 1;
+		}
+		int cmp;
+		cmp = StringUtils.compareStringsNullFirst(l.groupId, r.groupId);
+		if (cmp != 0) {
+			return cmp;
+		}
+		cmp = StringUtils.compareStringsNullFirst(l.artifactId, r.artifactId);
+		if (cmp != 0) {
+			return cmp;
+		}
+		cmp = StringUtils.compareStringsNullFirst(l.classifier, r.classifier);
+		if (cmp != 0) {
+			return cmp;
+		}
+		cmp = StringUtils.compareStringsNullFirst(l.extension, r.extension);
+		if (cmp != 0) {
+			return cmp;
+		}
+		cmp = StringUtils.compareStringsNullFirst(l.version, r.version);
+		if (cmp != 0) {
+			return cmp;
+		}
+		return 0;
+	};
+
 	//from org.eclipse.aether.artifact.DefaultArtifact
 	private static final Pattern COORDINATE_PATTERN = Pattern
 			.compile("([^: ]+):([^: ]+)(:([^: ]*)(:([^: ]+))?)?:([^: ]+)");
 
-	private String groupId;
-	private String artifactId;
-	private String classifier;
-	private String extension;
-	private String version;
+	protected String groupId;
+	protected String artifactId;
+	protected String classifier;
+	protected String extension;
+	protected String version;
 
 	/**
 	 * For {@link Externalizable}.
@@ -147,6 +183,18 @@ public final class ArtifactCoordinates implements Externalizable {
 		String classifier = m.group(6);
 		String version = m.group(7);
 		return new ArtifactCoordinates(groupId, artifactId, classifier, extension, version);
+	}
+
+	/**
+	 * Gets a comparator for {@link ArtifactCoordinates}.
+	 * <p>
+	 * The comparator compares <code>null</code>s first.
+	 * 
+	 * @return The comparator.
+	 * @since saker.maven.support 0.8.7
+	 */
+	public static Comparator<? super ArtifactCoordinates> comparator() {
+		return COMPARATOR_INSTANCE;
 	}
 
 	/**

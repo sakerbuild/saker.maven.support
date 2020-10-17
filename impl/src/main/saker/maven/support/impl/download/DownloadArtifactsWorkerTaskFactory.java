@@ -101,6 +101,7 @@ public class DownloadArtifactsWorkerTaskFactory implements TaskFactory<ArtifactD
 				Map<String, Object> valmap = new LinkedHashMap<>();
 				valmap.put("Artifacts", artifacts.stream().map(Object::toString).toArray());
 				BuildTrace.setValues(valmap, BuildTrace.VALUE_CATEGORY_TASK);
+				MavenImplUtils.reportConfgurationBuildTrace(configuration);
 			}
 		}
 

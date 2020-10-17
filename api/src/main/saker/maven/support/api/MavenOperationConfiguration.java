@@ -373,7 +373,7 @@ public final class MavenOperationConfiguration implements Externalizable {
 		 * <p>
 		 * Corresponds to the &lt;id/&gt; element in the pom.xml &lt;repository/&gt; configuration.
 		 * 
-		 * @return The repository identifier.
+		 * @return The repository identifier. May be <code>null</code>.
 		 */
 		public String getId() {
 			return id;

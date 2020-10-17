@@ -41,6 +41,7 @@ import saker.build.task.TaskFactory;
 import saker.build.task.identifier.TaskIdentifier;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
+import saker.build.trace.BuildTrace;
 import saker.build.util.property.BuildTimeExecutionProperty;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
@@ -120,6 +121,22 @@ public class ArtifactDeployWorkerTaskFactory
 	@SuppressWarnings("try")
 	@Override
 	public ArtifactDeployWorkerTaskOutput run(TaskContext taskcontext) throws Exception {
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			LinkedHashMap<Object, Object> values = new LinkedHashMap<>();
+			values.put("Repository configuration",
+					MavenImplUtils.createRepositoryConfigurationBuildTrace(repositoryConfiguration));
+			if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_016) {
+				//0.8.16 can handle SakerPath as values
+				values.put("Artifacts\t" + this.coordinates, this.artifacts);
+			} else {
+				Map<String, String> artifactsvals = new LinkedHashMap<>();
+				for (Entry<String, SakerPath> entry : this.artifacts.entrySet()) {
+					artifactsvals.put(entry.getKey(), Objects.toString(entry.getValue(), null));
+				}
+				values.put("Artifacts\t" + this.coordinates, artifactsvals);
+			}
+			BuildTrace.setValues(values, BuildTrace.VALUE_CATEGORY_TASK);
+		}
 		if (artifacts.isEmpty()) {
 			return new ArtifactDeployWorkerTaskOutputImpl(coordinates);
 		}

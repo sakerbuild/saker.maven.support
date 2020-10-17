@@ -99,6 +99,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 				Map<String, Object> valmap = new LinkedHashMap<>();
 				valmap.put("Artifacts", artifacts.stream().map(Object::toString).toArray());
 				BuildTrace.setValues(valmap, BuildTrace.VALUE_CATEGORY_TASK);
+				MavenImplUtils.reportConfgurationBuildTrace(configuration);
 			}
 		}
 
@@ -227,8 +228,8 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 				continue;
 			}
 
-			coordinateResults.put(acoords, StructuredTaskResult.createLiteral(
-					new ArtifactLocalizationWorkerTaskOutputImpl(acoords, artifactpath, artifactcd)));
+			coordinateResults.put(acoords, StructuredTaskResult
+					.createLiteral(new ArtifactLocalizationWorkerTaskOutputImpl(acoords, artifactpath, artifactcd)));
 		}
 	}
 
