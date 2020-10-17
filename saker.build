@@ -108,7 +108,8 @@ export(
 			MainAttributes: {
 				Nest-Bundle-Format-Version: 1,
 				Nest-Bundle-Identifier: "saker.maven.support-impl-v{ global(VERSION_saker.maven.support) }",
-				Nest-Bundle-Source: "saker.maven.support-sources-v{ global(VERSION_saker.maven.support) }"
+				Nest-Bundle-Source: "saker.maven.support-sources-v{ global(VERSION_saker.maven.support) }",
+				Nest-ClassPath-Supported-Build-System-Versions: "[0.8.10)",
 			},
 		},
 	)

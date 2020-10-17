@@ -80,14 +80,6 @@ import saker.maven.support.thirdparty.org.eclipse.aether.util.repository.Authent
 public class MavenImplUtils {
 	public static final String DEFAULT_CHECKSUM_POLICY = RepositoryPolicy.CHECKSUM_POLICY_WARN;
 	public static final String DEFAULT_UPDATE_POLICY = RepositoryPolicy.UPDATE_POLICY_DAILY;
-	/**
-	 * The URL to the central Maven repository.
-	 * <p>
-	 * Specified in: <br>
-	 * https://maven.apache.org/guides/mini/guide-mirror-settings.html <br>
-	 * https://maven.apache.org/ref/3.0.4/maven-model-builder/super-pom.html
-	 */
-	public static final String MAVEN_CENTRAL_REPOSITORY_URL = "https://repo.maven.apache.org/maven2/";
 
 	private MavenImplUtils() {
 		throw new UnsupportedOperationException();
@@ -104,7 +96,7 @@ public class MavenImplUtils {
 
 	public static RemoteRepository getMavenCentralRemoteRepository() {
 		//disable snapshots as in the super pom
-		return new RemoteRepository.Builder("central", "default", MAVEN_CENTRAL_REPOSITORY_URL)
+		return new RemoteRepository.Builder("central", "default", MavenUtils.MAVEN_CENTRAL_REPOSITORY_URL)
 				.setSnapshotPolicy(new RepositoryPolicy(false, null, null)).build();
 	}
 

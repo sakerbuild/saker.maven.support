@@ -85,7 +85,7 @@ public class InstallArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 					return null;
 				}
 				MavenOperationConfiguration configuration = MavenOperationConfigurationTaskOptionUtils
-						.createConfiguration(configurationOption);
+						.createConfiguration(taskcontext, configurationOption);
 				ArtifactInstallWorkerTaskFactory task = new ArtifactInstallWorkerTaskFactory(configuration,
 						coordinatesOption, artifactPathOption);
 				TaskIdentifier taskid = task.createTaskIdentifier();

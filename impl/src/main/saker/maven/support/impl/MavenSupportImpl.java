@@ -16,6 +16,7 @@
 package saker.maven.support.impl;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import saker.build.file.path.SakerPath;
@@ -52,34 +53,22 @@ public class MavenSupportImpl {
 
 	public static TaskIdentifier createResolveMavenArtifactDependencyTaskIdentifier(MavenOperationConfiguration config,
 			Map<? extends ArtifactCoordinates, ? extends MavenDependencyOption> coordinates) {
-		if (config == null) {
-			config = MavenOperationConfiguration.defaults();
-		}
 		return new ResolveMavenArtifactDependencyWorkerTaskFactory(coordinates, config);
 	}
 
 	public static TaskFactory<? extends MavenDependencyResolutionTaskOutput> createResolveMavenArtifactDependencyTaskFactory(
 			MavenOperationConfiguration config,
 			Map<? extends ArtifactCoordinates, ? extends MavenDependencyOption> coordinates) {
-		if (config == null) {
-			config = MavenOperationConfiguration.defaults();
-		}
 		return new ResolveMavenArtifactDependencyWorkerTaskFactory(coordinates, config);
 	}
 
 	public static TaskIdentifier createResolveMavenPomDependencyTaskIdentifier(MavenOperationConfiguration config,
 			SakerPath pompath) {
-		if (config == null) {
-			config = MavenOperationConfiguration.defaults();
-		}
 		return new ResolveMavenPomDependencyWorkerTaskFactory(config, pompath);
 	}
 
 	public static TaskFactory<? extends MavenDependencyResolutionTaskOutput> createResolveMavenPomDependencyTaskFactory(
 			MavenOperationConfiguration config, SakerPath pompath) {
-		if (config == null) {
-			config = MavenOperationConfiguration.defaults();
-		}
 		return new ResolveMavenPomDependencyWorkerTaskFactory(config, pompath);
 	}
 

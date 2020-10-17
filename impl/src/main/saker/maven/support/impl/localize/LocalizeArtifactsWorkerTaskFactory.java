@@ -51,7 +51,6 @@ import saker.build.trace.BuildTrace;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.localize.ArtifactLocalizationTaskOutput;
-import saker.maven.support.impl.ArtifactContentDescriptorExecutionProperty;
 import saker.maven.support.impl.ArtifactUtils;
 import saker.maven.support.impl.MavenImplUtils;
 import saker.maven.support.impl.RetrievalFailedStructuredTaskResult;
@@ -66,6 +65,7 @@ import saker.maven.support.thirdparty.org.eclipse.aether.repository.RemoteReposi
 import saker.maven.support.thirdparty.org.eclipse.aether.resolution.ArtifactRequest;
 import saker.maven.support.thirdparty.org.eclipse.aether.resolution.ArtifactResolutionException;
 import saker.maven.support.thirdparty.org.eclipse.aether.resolution.ArtifactResult;
+import saker.std.api.util.SakerStandardUtils;
 
 public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactLocalizationTaskOutput>,
 		Task<ArtifactLocalizationTaskOutput>, Externalizable, TaskIdentifier {
@@ -84,9 +84,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 	public LocalizeArtifactsWorkerTaskFactory(MavenOperationConfiguration operationConfiguration,
 			Set<? extends ArtifactCoordinates> artifacts) {
 		Objects.requireNonNull(artifacts, "artifacts");
-		if (operationConfiguration == null) {
-			operationConfiguration = MavenOperationConfiguration.defaults();
-		}
+		Objects.requireNonNull(operationConfiguration, "configuration");
 		this.configuration = operationConfiguration;
 		this.artifacts = ImmutableUtils.makeImmutableLinkedHashSet(artifacts);
 	}
@@ -221,7 +219,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 			SakerPath artifactpath = SakerPath.valueOf(file.getAbsolutePath());
 
 			ContentDescriptor artifactcd = taskcontext.getTaskUtilities().getReportExecutionDependency(
-					new ArtifactContentDescriptorExecutionProperty(cduniqueness, artifactpath));
+					SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(artifactpath, cduniqueness));
 			if (artifactcd == null) {
 				coordinateResults.put(acoords, new RetrievalFailedStructuredTaskResult("Failed to localize " + acoords,
 						ImmutableUtils.singletonList(
@@ -229,7 +227,7 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 				continue;
 			}
 
-			coordinateResults.put(acoords, new CompletedStructuredTaskResult(
+			coordinateResults.put(acoords, StructuredTaskResult.createLiteral(
 					new ArtifactLocalizationWorkerTaskOutputImpl(acoords, artifactpath, artifactcd)));
 		}
 	}
@@ -239,13 +237,15 @@ public class LocalizeArtifactsWorkerTaskFactory implements TaskFactory<ArtifactL
 		SakerPath localartifactpath = repositorybasedir
 				.resolve(SakerPath.valueOf(localrepomanager.getPathForLocalArtifact(artifact)));
 		taskcontext.reportExecutionDependency(
-				new ArtifactContentDescriptorExecutionProperty(cduniqueness, localartifactpath), null);
+				SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(localartifactpath, cduniqueness),
+				null);
 
 		for (RemoteRepository remoterepo : request.getRepositories()) {
 			SakerPath artifactpath = repositorybasedir
 					.resolve(SakerPath.valueOf(localrepomanager.getPathForRemoteArtifact(artifact, remoterepo, null)));
 			taskcontext.reportExecutionDependency(
-					new ArtifactContentDescriptorExecutionProperty(cduniqueness, artifactpath), null);
+					SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(artifactpath, cduniqueness),
+					null);
 		}
 	}
 

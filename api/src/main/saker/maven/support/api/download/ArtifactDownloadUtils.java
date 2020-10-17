@@ -35,13 +35,12 @@ public class ArtifactDownloadUtils {
 	 * Creates a new task that downloads the specified artifacts.
 	 * 
 	 * @param config
-	 *            The configuration to use during the operation or <code>null</code> to use the
-	 *            {@linkplain MavenOperationConfiguration#defaults() defaults}.
+	 *            The configuration to use during the operation .
 	 * @param coordinates
 	 *            The artifact coordinates to download.
 	 * @return The downloading task factory.
 	 * @throws NullPointerException
-	 *             If <code>coordinates</code> is <code>null</code>.
+	 *             If any of the arguments are <code>null</code>.
 	 * @see #createDownloadArtifactsTaskIdentifier(MavenOperationConfiguration, Set)
 	 */
 	public static TaskFactory<? extends ArtifactDownloadTaskOutput> createDownloadArtifactsTaskFactory(
@@ -53,17 +52,16 @@ public class ArtifactDownloadUtils {
 	/**
 	 * Creates a task identifier for the artifact downloading task.
 	 * <p>
-	 * The created task identifier should be userd with the result of
+	 * The created task identifier should be used with the result of
 	 * {@link #createDownloadArtifactsTaskFactory(MavenOperationConfiguration, Set)}.
 	 * 
 	 * @param config
-	 *            The configuration to use during the operation or <code>null</code> to use the
-	 *            {@linkplain MavenOperationConfiguration#defaults() defaults}.
+	 *            The configuration to use during the operation.
 	 * @param coordinates
 	 *            The artifact coordinates to download.
 	 * @return The task identifier.
 	 * @throws NullPointerException
-	 *             If <code>coordinates</code> is <code>null</code>.
+	 *             If any of the arguments are <code>null</code>.
 	 * @see #createDownloadArtifactsTaskFactory(MavenOperationConfiguration, Set)
 	 */
 	public static TaskIdentifier createDownloadArtifactsTaskIdentifier(MavenOperationConfiguration config,

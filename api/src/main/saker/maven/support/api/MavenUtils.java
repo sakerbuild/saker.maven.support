@@ -19,6 +19,17 @@ public class MavenUtils {
 	}
 
 	/**
+	 * The URL to the central Maven repository.
+	 * <p>
+	 * Specified in: <br>
+	 * https://maven.apache.org/guides/mini/guide-mirror-settings.html <br>
+	 * https://maven.apache.org/ref/3.0.4/maven-model-builder/super-pom.html
+	 * 
+	 * @since saker.maven.support 0.8.7
+	 */
+	public static final String MAVEN_CENTRAL_REPOSITORY_URL = "https://repo.maven.apache.org/maven2/";
+
+	/**
 	 * Gets the default Maven repository location on the local file system.
 	 * <p>
 	 * It is defined to be: <code>{user.home}/.m2/repository</code>

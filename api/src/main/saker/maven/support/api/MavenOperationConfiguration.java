@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -231,9 +232,23 @@ public final class MavenOperationConfiguration implements Externalizable {
 
 		@Override
 		public String toString() {
-			return getClass().getSimpleName() + "[enabled=" + enabled + ", "
-					+ (updatePolicy != null ? "updatePolicy=" + updatePolicy + ", " : "")
-					+ (checksumPolicy != null ? "checksumPolicy=" + checksumPolicy : "") + "]";
+			StringBuilder sb = new StringBuilder();
+			sb.append(getClass().getSimpleName());
+			if (enabled) {
+				sb.append("enabled");
+				if (updatePolicy != null) {
+					sb.append(", updatePolicy=");
+					sb.append(updatePolicy);
+				}
+				if (checksumPolicy != null) {
+					sb.append(", checksumPolicy=");
+					sb.append(updatePolicy);
+				}
+			} else {
+				sb.append("disabled");
+			}
+			sb.append("]");
+			return sb.toString();
 		}
 
 	}
@@ -245,6 +260,17 @@ public final class MavenOperationConfiguration implements Externalizable {
 	 */
 	public static final class RepositoryConfiguration implements Externalizable {
 		private static final long serialVersionUID = 1L;
+
+		/**
+		 * The default {@link RepositoryConfiguration} pointing to {@linkplain MavenUtils#MAVEN_CENTRAL_REPOSITORY_URL
+		 * Maven central}.
+		 * <p>
+		 * The snapshot policy is set to disabled.
+		 * 
+		 * @since saker.maven.support 0.8.7
+		 */
+		public static final RepositoryConfiguration DEFAULT_MAVEN_CENTRAL = new RepositoryConfiguration("central",
+				"default", MavenUtils.MAVEN_CENTRAL_REPOSITORY_URL, RepositoryPolicyConfiguration.disabled(), null);
 
 		private String id;
 		private String layout;
@@ -804,6 +830,11 @@ public final class MavenOperationConfiguration implements Externalizable {
 	public MavenOperationConfiguration() {
 	}
 
+	private MavenOperationConfiguration(SakerPath localRepositoryPath, Set<RepositoryConfiguration> repositories) {
+		this.localRepositoryPath = localRepositoryPath;
+		this.repositories = repositories;
+	}
+
 	/**
 	 * Gets the local file system path for the local repository.
 	 * <p>
@@ -880,10 +911,29 @@ public final class MavenOperationConfiguration implements Externalizable {
 	/**
 	 * Creates a new {@link MavenOperationConfiguration} builder.
 	 * 
+	 * @deprecated Use {@link #builder(SakerPath)}.
 	 * @return The new builder.
 	 */
+	@Deprecated
 	public static Builder builder() {
 		return new Builder();
+	}
+
+	/**
+	 * Creates a new {@link MavenOperationConfiguration} builder with the specified local repository path.
+	 * <p>
+	 * No remote repositories are added by default.
+	 * 
+	 * @param localRepositoryPath
+	 *            The local repository path.
+	 * @return The new builder.
+	 * @see MavenUtils#getDefaultMavenLocalRepositoryLocation(TaskContext)
+	 * @throws NullPointerException
+	 *             If the argument is <code>null</code>.
+	 */
+	public static Builder builder(SakerPath localRepositoryPath) throws NullPointerException {
+		Objects.requireNonNull(localRepositoryPath, "localRepositoryPath");
+		return new Builder(localRepositoryPath);
 	}
 
 	/**
@@ -907,10 +957,32 @@ public final class MavenOperationConfiguration implements Externalizable {
 	 * <p>
 	 * The getter methods will all return <code>null</code> to signal that the default should be used.
 	 * 
+	 * @deprecated Use {@link #defaults(TaskContext)}.
 	 * @return The defaults configuration.
 	 */
+	@Deprecated
 	public static MavenOperationConfiguration defaults() {
 		return DEFAULTS_INSTANCE;
+	}
+
+	/**
+	 * Gets the Maven operation configuration that uses the default values.
+	 * <p>
+	 * It has the local repository path to the
+	 * {@linkplain MavenUtils#getDefaultMavenLocalRepositoryLocation(TaskContext) default repository location}, and uses
+	 * the {@linkplain RepositoryConfiguration#DEFAULT_MAVEN_CENTRAL Maven Central} as the remote repository.
+	 * 
+	 * @param taskcontext
+	 *            The task context.
+	 * @return The default configuration.
+	 * @throws NullPointerException
+	 *             If the task context is <code>null</code>.
+	 * @since saker.maven.support 0.8.7
+	 */
+	public static MavenOperationConfiguration defaults(TaskContext taskcontext) throws NullPointerException {
+		Objects.requireNonNull(taskcontext, "taskcontext");
+		return new MavenOperationConfiguration(MavenUtils.getDefaultMavenLocalRepositoryLocation(taskcontext),
+				Collections.singleton(RepositoryConfiguration.DEFAULT_MAVEN_CENTRAL));
 	}
 
 	/**
@@ -923,6 +995,11 @@ public final class MavenOperationConfiguration implements Externalizable {
 		protected Builder() {
 		}
 
+		protected Builder(SakerPath localRepositoryPath) {
+			this.localRepositoryPath = localRepositoryPath;
+			this.repositories = Collections.emptySet();
+		}
+
 		protected Builder(MavenOperationConfiguration copy) {
 			this.localRepositoryPath = copy.localRepositoryPath;
 			this.repositories = copy.repositories;
@@ -930,32 +1007,40 @@ public final class MavenOperationConfiguration implements Externalizable {
 
 		/**
 		 * Sets the {@linkplain MavenOperationConfiguration#getLocalRepositoryPath() local repository path}.
+		 * <p>
+		 * <b>Note: </b> The interpretation of the <code>null</code> argument changed in saker.maven.support 0.8.7 from
+		 * using the defaults to throwing {@link NullPointerException}.
 		 * 
 		 * @param localRepositoryPath
-		 *            The local repository path or <code>null</code> to reset to the
-		 *            {@linkplain MavenOperationConfiguration#defaults() defaults}.
+		 *            The local repository path.
 		 * @return <code>this</code>
 		 * @throws IllegalArgumentException
 		 *             If the argument is not absolute.
+		 * @throws NullPointerException
+		 *             If the argument is <code>null</code>.
 		 */
 		public Builder setLocalRepositoryPath(SakerPath localRepositoryPath) throws IllegalArgumentException {
-			if (localRepositoryPath != null) {
-				SakerPathFiles.requireAbsolutePath(localRepositoryPath);
-			}
+			SakerPathFiles.requireAbsolutePath(localRepositoryPath);
 			this.localRepositoryPath = localRepositoryPath;
 			return this;
 		}
 
 		/**
 		 * Sets the {@linkplain MavenOperationConfiguration#getRepositories() repositories}.
+		 * <p>
+		 * <b>Note: </b> The interpretation of the <code>null</code> argument changed in saker.maven.support 0.8.7 from
+		 * using the defaults to setting no repositories.
 		 * 
 		 * @param repositories
-		 *            The repositories or <code>null</code> to reset to the
-		 *            {@linkplain MavenOperationConfiguration#defaults() defaults}.
+		 *            The repositories. <code>null</code> will cause the repositories to be cleared.
 		 * @return <code>this</code>
 		 */
 		public Builder setRepositories(Set<? extends RepositoryConfiguration> repositories) {
-			this.repositories = ImmutableUtils.makeImmutableLinkedHashSet(repositories);
+			if (repositories == null) {
+				this.repositories = Collections.emptySet();
+			} else {
+				this.repositories = ImmutableUtils.makeImmutableLinkedHashSet(repositories);
+			}
 			return this;
 		}
 

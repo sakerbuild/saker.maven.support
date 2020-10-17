@@ -128,7 +128,7 @@ public class ResolveMavenDependencyTaskFactory extends FrontendTaskFactory<Objec
 					return null;
 				}
 				MavenOperationConfiguration config = MavenOperationConfigurationTaskOptionUtils
-						.createConfiguration(this.configuration);
+						.createConfiguration(taskcontext, this.configuration);
 				TaskIdentifier workertaskid;
 				if (artifacts != null) {
 					Collection<String> dependenciescollection = artifacts.get();

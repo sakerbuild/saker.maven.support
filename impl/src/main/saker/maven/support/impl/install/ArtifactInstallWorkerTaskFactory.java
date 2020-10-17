@@ -41,7 +41,6 @@ import saker.build.task.identifier.TaskIdentifier;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.install.ArtifactInstallWorkerTaskOutput;
-import saker.maven.support.impl.ArtifactContentDescriptorExecutionProperty;
 import saker.maven.support.impl.MavenImplUtils;
 import saker.maven.support.main.install.InstallArtifactsTaskFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.DefaultRepositorySystemSession;
@@ -52,6 +51,7 @@ import saker.maven.support.thirdparty.org.eclipse.aether.impl.DefaultServiceLoca
 import saker.maven.support.thirdparty.org.eclipse.aether.installation.InstallRequest;
 import saker.maven.support.thirdparty.org.eclipse.aether.repository.LocalRepository;
 import saker.maven.support.thirdparty.org.eclipse.aether.repository.LocalRepositoryManager;
+import saker.std.api.util.SakerStandardUtils;
 
 public class ArtifactInstallWorkerTaskFactory
 		implements TaskFactory<ArtifactInstallWorkerTaskOutput>, Task<ArtifactInstallWorkerTaskOutput>, Externalizable {
@@ -149,7 +149,7 @@ public class ArtifactInstallWorkerTaskFactory
 					String localpath = reposession.getLocalRepositoryManager().getPathForLocalArtifact(artifact);
 					installresultartifactpath = repositorybasedir.resolve(localpath);
 					taskcontext.getTaskUtilities().getReportExecutionDependency(
-							new ArtifactContentDescriptorExecutionProperty(cduniqueness, installresultartifactpath));
+							SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(installresultartifactpath, cduniqueness));
 				}
 			}
 		}

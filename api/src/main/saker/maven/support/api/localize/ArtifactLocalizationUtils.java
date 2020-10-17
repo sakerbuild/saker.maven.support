@@ -35,13 +35,12 @@ public class ArtifactLocalizationUtils {
 	 * Creates a new task that localizes the specified artifacts.
 	 * 
 	 * @param config
-	 *            The configuration to use during the operation or <code>null</code> to use the
-	 *            {@linkplain MavenOperationConfiguration#defaults() defaults}.
+	 *            The configuration to use during the operation.
 	 * @param coordinates
 	 *            The artifact coordinates to localize.
 	 * @return The localizing task factory.
 	 * @throws NullPointerException
-	 *             If <code>coordinates</code> is <code>null</code>.
+	 *             If any of the arguments are <code>null</code>.
 	 * @see #createLocalizeArtifactsTaskIdentifier(MavenOperationConfiguration, Set)
 	 */
 	public static TaskFactory<? extends ArtifactLocalizationTaskOutput> createLocalizeArtifactsTaskFactory(
@@ -53,17 +52,16 @@ public class ArtifactLocalizationUtils {
 	/**
 	 * Creates a task identifier for the artifact localization task.
 	 * <p>
-	 * The created task identifier should be userd with the result of
+	 * The created task identifier should be used with the result of
 	 * {@link #createLocalizeArtifactsTaskFactory(MavenOperationConfiguration, Set)}.
 	 * 
 	 * @param config
-	 *            The configuration to use during the operation or <code>null</code> to use the
-	 *            {@linkplain MavenOperationConfiguration#defaults() defaults}.
+	 *            The configuration to use during the operation.
 	 * @param coordinates
 	 *            The artifact coordinates to localize.
 	 * @return The task identifier.
 	 * @throws NullPointerException
-	 *             If <code>coordinates</code> is <code>null</code>.
+	 *             If any of the arguments are <code>null</code>.
 	 * @see #createLocalizeArtifactsTaskFactory(MavenOperationConfiguration, Set)
 	 */
 	public static TaskIdentifier createLocalizeArtifactsTaskIdentifier(MavenOperationConfiguration config,

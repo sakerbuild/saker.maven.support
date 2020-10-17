@@ -106,7 +106,7 @@ public class LocalizeArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 								return null;
 							}
 						}
-						return handleArtifactCoordinates(taskcontext, getRepositoryOperationConfiguration(),
+						return handleArtifactCoordinates(taskcontext, getRepositoryOperationConfiguration(taskcontext),
 								coordinates);
 					}
 					StructuredTaskResult structuredartifacts = (StructuredTaskResult) artifacts;
@@ -131,7 +131,8 @@ public class LocalizeArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 							return null;
 						}
 					}
-					return handleArtifactCoordinates(taskcontext, getRepositoryOperationConfiguration(), coordinates);
+					return handleArtifactCoordinates(taskcontext, getRepositoryOperationConfiguration(taskcontext),
+							coordinates);
 				}
 
 				//TODO handle artifact localization result?
@@ -155,7 +156,7 @@ public class LocalizeArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 					return null;
 				}
 				try {
-					return handleArtifactCoordinates(taskcontext, getRepositoryOperationConfiguration(),
+					return handleArtifactCoordinates(taskcontext, getRepositoryOperationConfiguration(taskcontext),
 							Collections.singleton(ArtifactCoordinates.valueOf(coordsstr)));
 				} catch (IllegalArgumentException e) {
 					taskcontext.abortExecution(e);
@@ -163,9 +164,9 @@ public class LocalizeArtifactsTaskFactory extends FrontendTaskFactory<Object> {
 				}
 			}
 
-			private MavenOperationConfiguration getRepositoryOperationConfiguration() {
+			private MavenOperationConfiguration getRepositoryOperationConfiguration(TaskContext taskcontext) {
 				MavenOperationConfiguration config = MavenOperationConfigurationTaskOptionUtils
-						.createConfiguration(this.configuration);
+						.createConfiguration(taskcontext, this.configuration);
 				return config;
 			}
 		};

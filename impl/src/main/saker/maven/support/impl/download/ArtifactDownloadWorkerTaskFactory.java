@@ -36,8 +36,8 @@ import saker.build.task.TaskFactory;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.maven.support.api.ArtifactCoordinates;
 import saker.maven.support.api.download.ArtifactDownloadWorkerTaskOutput;
-import saker.maven.support.impl.ArtifactContentDescriptorExecutionProperty;
 import saker.maven.support.main.download.DownloadArtifactsTaskFactory;
+import saker.std.api.util.SakerStandardUtils;
 
 public class ArtifactDownloadWorkerTaskFactory implements TaskFactory<ArtifactDownloadWorkerTaskOutput>,
 		Task<ArtifactDownloadWorkerTaskOutput>, Externalizable {
@@ -79,7 +79,7 @@ public class ArtifactDownloadWorkerTaskFactory implements TaskFactory<ArtifactDo
 
 		SakerPath artifactpath = repositoryBaseDirectory.resolve(repositoryRelativeArtifactPath);
 		ContentDescriptor contentdescriptor = taskcontext.getTaskUtilities().getReportExecutionDependency(
-				new ArtifactContentDescriptorExecutionProperty(UUID.randomUUID(), artifactpath));
+				SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(artifactpath, UUID.randomUUID()));
 		if (contentdescriptor == null) {
 			taskcontext.abortExecution(new FileNotFoundException("Artifact not found: " + artifactpath));
 			return null;

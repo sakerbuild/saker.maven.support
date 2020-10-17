@@ -19,7 +19,7 @@ import java.util.Collection;
 
 import saker.build.file.path.SakerPath;
 import saker.build.scripting.model.info.TypeInformationKind;
-import saker.maven.support.impl.MavenImplUtils;
+import saker.maven.support.api.MavenUtils;
 import saker.maven.support.main.configuration.option.MavenConfigurationTaskOption;
 import saker.maven.support.main.dependency.ResolveMavenDependencyTaskFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.repository.RepositoryPolicy;
@@ -34,7 +34,7 @@ public class TaskDocs {
 	public static final String PARAM_CONFIGURATION = "Specifies the configuration to use during the operation.\n"
 			+ "The parameter can be used to specify the local repository path, and the configuration for remote repositories.\n"
 			+ "If no configuration is specified, the task will use the local repository at {user.home}/.m2/repository, and "
-			+ "the remote repository from Maven Central: " + MavenImplUtils.MAVEN_CENTRAL_REPOSITORY_URL;
+			+ "the remote repository from Maven Central: " + MavenUtils.MAVEN_CENTRAL_REPOSITORY_URL;
 	private static final String OUTPUT_CONFIGURATION = "The Maven configuration that was used during the operation.\n"
 			+ "This field can be passed to other Maven related tasks for their configurations.";
 

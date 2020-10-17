@@ -16,10 +16,13 @@
 package saker.maven.support.main.configuration.option;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import saker.build.file.path.SakerPath;
+import saker.build.task.TaskContext;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
@@ -27,24 +30,31 @@ import saker.maven.support.api.MavenOperationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.AuthenticationConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryPolicyConfiguration;
+import saker.maven.support.api.MavenUtils;
 import saker.maven.support.thirdparty.org.eclipse.aether.repository.RepositoryPolicy;
 
 public class MavenOperationConfigurationTaskOptionUtils {
 
 	//TODO handle argument exceptions in callers
-	public static MavenOperationConfiguration createConfiguration(MavenConfigurationTaskOption options) {
+	public static MavenOperationConfiguration createConfiguration(TaskContext taskcontext,
+			MavenConfigurationTaskOption options) {
 		if (options == null) {
-			return MavenOperationConfiguration.defaults();
+			return MavenOperationConfiguration.defaults(taskcontext);
 		}
-		return options.createConfiguration();
+		return options.createConfiguration(taskcontext);
 	}
 
-	static MavenOperationConfiguration createConfigurationImpl(MavenConfigurationTaskOption options) {
-		MavenOperationConfiguration.Builder builder = MavenOperationConfiguration.builder();
+	static MavenOperationConfiguration createConfigurationImpl(TaskContext taskcontext,
+			MavenConfigurationTaskOption options) {
 		LocalRepositoryPathTaskOption localrepopathoption = options.getLocalRepositoryPath();
+		SakerPath localrepopath = null;
 		if (localrepopathoption != null) {
-			builder.setLocalRepositoryPath(localrepopathoption.getPath());
+			localrepopath = localrepopathoption.getPath();
 		}
+		if (localrepopath == null) {
+			localrepopath = MavenUtils.getDefaultMavenLocalRepositoryLocation(taskcontext);
+		}
+		MavenOperationConfiguration.Builder builder = MavenOperationConfiguration.builder(localrepopath);
 		Collection<RepositoryTaskOption> repos = options.getRepositories();
 		if (repos != null) {
 			Set<RepositoryConfiguration> repoconfigs = new LinkedHashSet<>();
@@ -53,6 +63,8 @@ public class MavenOperationConfigurationTaskOptionUtils {
 				repoconfigs.add(repoconfig);
 			}
 			builder.setRepositories(repoconfigs);
+		} else {
+			builder.setRepositories(Collections.singleton(RepositoryConfiguration.DEFAULT_MAVEN_CENTRAL));
 		}
 		return builder.build();
 	}

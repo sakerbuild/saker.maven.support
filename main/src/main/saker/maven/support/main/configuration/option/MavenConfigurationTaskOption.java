@@ -17,8 +17,9 @@ package saker.maven.support.main.configuration.option;
 
 import java.util.Collection;
 
+import saker.build.task.TaskContext;
 import saker.maven.support.api.MavenOperationConfiguration;
-import saker.maven.support.impl.MavenImplUtils;
+import saker.maven.support.api.MavenUtils;
 import saker.nest.scriptinfo.reflection.annot.NestFieldInformation;
 import saker.nest.scriptinfo.reflection.annot.NestInformation;
 import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
@@ -35,12 +36,12 @@ import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 		type = @NestTypeUsage(value = Collection.class, elementTypes = RepositoryTaskOption.class),
 		info = @NestInformation("Specifies the remote repositories to use during operations with the Maven Resolver.\n"
 				+ "If not specified, Maven Central is used with the Id of \"central\" at: "
-				+ MavenImplUtils.MAVEN_CENTRAL_REPOSITORY_URL + "\n"
+				+ MavenUtils.MAVEN_CENTRAL_REPOSITORY_URL + "\n"
 				+ "In order to remove the default, specify empty Repositories. If you specify any repository, the default central repository "
 				+ "is not added automatically, and you need to add it yourself."))
 public interface MavenConfigurationTaskOption {
-	public default MavenOperationConfiguration createConfiguration() {
-		return MavenOperationConfigurationTaskOptionUtils.createConfigurationImpl(this);
+	public default MavenOperationConfiguration createConfiguration(TaskContext taskcontext) {
+		return MavenOperationConfigurationTaskOptionUtils.createConfigurationImpl(taskcontext, this);
 	}
 
 	public default LocalRepositoryPathTaskOption getLocalRepositoryPath() {
@@ -54,7 +55,7 @@ public interface MavenConfigurationTaskOption {
 	public static MavenConfigurationTaskOption valueOf(MavenOperationConfiguration configuration) {
 		return new MavenConfigurationTaskOption() {
 			@Override
-			public MavenOperationConfiguration createConfiguration() {
+			public MavenOperationConfiguration createConfiguration(TaskContext taskcontext) {
 				return configuration;
 			}
 		};
