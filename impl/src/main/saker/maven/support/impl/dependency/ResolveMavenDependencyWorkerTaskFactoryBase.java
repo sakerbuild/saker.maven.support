@@ -68,6 +68,7 @@ import saker.maven.support.thirdparty.org.apache.maven.model.building.ModelProbl
 import saker.maven.support.thirdparty.org.apache.maven.model.locator.DefaultModelLocator;
 import saker.maven.support.thirdparty.org.apache.maven.model.locator.ModelLocator;
 import saker.maven.support.thirdparty.org.apache.maven.model.validation.ModelValidator;
+import saker.maven.support.thirdparty.org.apache.maven.repository.internal.ArtifactDescriptorReaderDelegate;
 import saker.maven.support.thirdparty.org.eclipse.aether.DefaultRepositorySystemSession;
 import saker.maven.support.thirdparty.org.eclipse.aether.RepositorySystem;
 import saker.maven.support.thirdparty.org.eclipse.aether.artifact.Artifact;
@@ -116,8 +117,8 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 			Map<? extends ArtifactCoordinates, ? extends MavenDependencyOption> coordinates) throws Exception {
 		return resolveDependencies(taskcontext, (repositories, reposystem, reposession) -> {
 			List<Dependency> collectdependencies = new ArrayList<>();
-			Map<ArtifactCoordinates, ArtifactRequest> pomrequests = getNoExtensionPomArtifactRequests(coordinates,
-					repositories);
+			Map<ArtifactCoordinates, ArtifactRequest> pomrequests = getNoExtensionPomArtifactRequests(
+					coordinates.keySet(), repositories);
 			Map<ArtifactCoordinates, ArtifactResult> pomresults = null;
 			if (!ObjectUtils.isNullOrEmpty(pomrequests)) {
 				List<ArtifactResult> resolutionresults = reposystem.resolveArtifacts(reposession, pomrequests.values());
@@ -136,7 +137,7 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 				if (ObjectUtils.isNullOrEmpty(acoords.getExtension())) {
 					ArtifactResult pomresolutionresult = pomresults.get(acoords);
 
-					//retrieve the packaging from the model as the extension
+					//retrieve the packaging from the model and determine the extension for the artifact
 					File pomfile = pomresolutionresult.getArtifact().getFile();
 					DefaultModelBuildingRequest buildrequest = createModelBuildingRequest(repositories, reposystem,
 							reposession).setModelSource(new FileModelSource(pomfile));
@@ -145,8 +146,14 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 //					[saker.maven.resolve][[ERROR] Malformed POM c:\Users\sipka\.m2\repository\io\gsonfire\gson-fire\1.8.0\gson-fire-1.8.0.pom: Unrecognised tag: 'organizationUrl' (position: START_TAG seen ...</email>\n            <organizationUrl>... @29:30)  @ c:\Users\sipka\.m2\repository\io\gsonfire\gson-fire\1.8.0\gson-fire-1.8.0.pom, line 29, column 30]
 //					[saker.maven.resolve][[ERROR] Malformed POM c:\Users\sipka\.m2\repository\org\threeten\threetenbp\1.3.5\threetenbp-1.3.5.pom: Unrecognised tag: 'organization' (position: START_TAG seen ...</url>\r\n  </scm>\r\n  <organization>... @90:17)  @ c:\Users\sipka\.m2\repository\org\threeten\threetenbp\1.3.5\threetenbp-1.3.5.pom, line 90, column 17]
 					Model model = buildSimpleModel(buildrequest);
+					String packaging = model.getPackaging();
+					if (packaging == null) {
+						//shouldn't really happen
+						throw new NullPointerException("Packaging is null for build model of: " + pomfile);
+					}
+					String extension = MavenImplUtils.getExtensionForPackaging(packaging);
 					acoords = new ArtifactCoordinates(acoords.getGroupId(), acoords.getArtifactId(),
-							acoords.getClassifier(), model.getPackaging(), acoords.getVersion());
+							acoords.getClassifier(), extension, acoords.getVersion());
 				}
 				Artifact artifact = ArtifactUtils.toArtifact(acoords);
 				MavenDependencyOption depoption = entry.getValue();
@@ -173,11 +180,9 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 	}
 
 	private static Map<ArtifactCoordinates, ArtifactRequest> getNoExtensionPomArtifactRequests(
-			Map<? extends ArtifactCoordinates, ? extends MavenDependencyOption> coordinates,
-			List<RemoteRepository> repositories) {
+			Collection<? extends ArtifactCoordinates> coordinates, List<RemoteRepository> repositories) {
 		Map<ArtifactCoordinates, ArtifactRequest> pomrequest = new HashMap<>();
-		for (Entry<? extends ArtifactCoordinates, ? extends MavenDependencyOption> entry : coordinates.entrySet()) {
-			ArtifactCoordinates acoords = entry.getKey();
+		for (ArtifactCoordinates acoords : coordinates) {
 			if (ObjectUtils.isNullOrEmpty(acoords.getExtension())) {
 				ArtifactRequest artrequest = new ArtifactRequest(new DefaultArtifact(acoords.getGroupId(),
 						acoords.getArtifactId(), "", "pom", acoords.getVersion()), repositories, null);
@@ -226,9 +231,9 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 
 	private static DefaultModelBuildingRequest createModelBuildingRequest(List<RemoteRepository> repositories,
 			RepositorySystem reposystem, DefaultRepositorySystemSession reposession) {
-		DefaultModelBuildingRequest result = new DefaultModelBuildingRequest();
-		result.setModelResolver(new ReimplementedDefaultModelResolver(repositories, reposystem, reposession));
-		return result;
+		DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
+		request.setModelResolver(new ReimplementedDefaultModelResolver(repositories, reposystem, reposession));
+		return request;
 	}
 
 	private static Model buildSimpleModel(ModelBuildingRequest modelbuildrequest) throws ModelBuildingException {
@@ -275,7 +280,10 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 
 		RepositorySystem reposystem = serviceLocator.getService(RepositorySystem.class);
 
+		ModelPackagingCollectorArtifactDescriptorReaderDelegate packagingcollector = new ModelPackagingCollectorArtifactDescriptorReaderDelegate();
+
 		DefaultRepositorySystemSession reposession = MavenImplUtils.createNewSession(taskcontext, config);
+		reposession.setConfigProperty(ArtifactDescriptorReaderDelegate.class.getName(), packagingcollector);
 
 		LocalRepository localrepository = new LocalRepository(repositorybasedir.toString());
 		reposession.setLocalRepositoryManager(reposystem.newLocalRepositoryManager(reposession, localrepository));
@@ -335,7 +343,12 @@ public abstract class ResolveMavenDependencyWorkerTaskFactoryBase
 								ourmap = null;
 							}
 
-							ArtifactCoordinates coords = ArtifactUtils.toArtifactCoordinates(artifact);
+							String extension = MavenImplUtils.getArtifactTrueExtensionForDependency(packagingcollector,
+									artifact);
+
+							ArtifactCoordinates coords = new ArtifactCoordinates(artifact.getGroupId(),
+									artifact.getArtifactId(), artifact.getClassifier(), extension,
+									artifact.getVersion());
 							String scope = dependency.getScope();
 							if (buildTraceDependencyScope != null) {
 								parentmap.put(coords.toString() + ":" + scope, ourmap);

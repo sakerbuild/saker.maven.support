@@ -42,6 +42,7 @@ import saker.maven.support.api.MavenOperationConfiguration.PrivateKeyAuthenticat
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryConfiguration;
 import saker.maven.support.api.MavenOperationConfiguration.RepositoryPolicyConfiguration;
 import saker.maven.support.api.MavenUtils;
+import saker.maven.support.impl.dependency.ModelPackagingCollectorArtifactDescriptorReaderDelegate;
 import saker.maven.support.impl.dependency.option.ExclusionOption;
 import saker.maven.support.thirdparty.org.apache.maven.model.Model;
 import saker.maven.support.thirdparty.org.apache.maven.model.building.DefaultModelBuildingRequest;
@@ -62,6 +63,7 @@ import saker.maven.support.thirdparty.org.eclipse.aether.AbstractRepositoryListe
 import saker.maven.support.thirdparty.org.eclipse.aether.DefaultRepositorySystemSession;
 import saker.maven.support.thirdparty.org.eclipse.aether.RepositoryEvent;
 import saker.maven.support.thirdparty.org.eclipse.aether.RepositorySystemSession;
+import saker.maven.support.thirdparty.org.eclipse.aether.artifact.Artifact;
 import saker.maven.support.thirdparty.org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
 import saker.maven.support.thirdparty.org.eclipse.aether.graph.Exclusion;
 import saker.maven.support.thirdparty.org.eclipse.aether.impl.DefaultServiceLocator;
@@ -598,4 +600,67 @@ public class MavenImplUtils {
 
 		}
 	}
+
+	public static String getExtensionForPackaging(String packaging) {
+		//based on https://maven.apache.org/ref/3.8.6/maven-core/artifact-handlers.html
+		//      and org.apache.maven.repository.internal.MavenRepositorySystemUtils.newSession()
+		switch (packaging) {
+			case "ejb":
+			case "maven-plugin":
+			case "ejb-client":
+			case "java-source":
+			case "javadoc": {
+				return "jar";
+			}
+			default: {
+				return packaging;
+			}
+		}
+	}
+
+	public static String getArtifactTrueExtensionForDependency(
+			ModelPackagingCollectorArtifactDescriptorReaderDelegate packagingcollector, Artifact artifact) {
+		String extension = artifact.getExtension();
+		if ("jar".equals(extension)) {
+//				In cases when the dependency type is not specified, Maven assumes jar as the default (per spec)
+//				Like:
+//				
+//			    <dependency>
+//			      <groupId>androidx.core</groupId>
+//			      <artifactId>core-ktx</artifactId>
+//			      <version>1.3.2</version>
+//			      <scope>runtime</scope>
+//			    </dependency>
+//
+//				This implicit jar dependency type is passed through the resolved artifact as well, 
+//				  so we can check that here in the resolved artifact extension.
+//				The above artifact has aar packaging. Therefore, if we use jar extension, it won't be found down the line.
+//				Due to this, we fix the extension here.
+//				This is more so the fault of the library authors that don't declare <type>aar</type> in their pom, 
+//				  but we fix this here. 
+
+			String packaging = packagingcollector.getPackaging(artifact);
+			if (packaging != null && !packaging.equals(extension)) {
+				//the packaging is specified in the model of the depenency, and it is not jar
+				//based on https://maven.apache.org/ref/3.8.6/maven-core/artifact-handlers.html
+				switch (packaging) {
+					case "ejb":
+					case "maven-plugin":
+					case "java-source":
+					case "javadoc": {
+						//jar is the extension for these packaging types, okay
+						break;
+					}
+					default: {
+						//in other cases override the extension with the same value as the packaging
+						extension = packaging;
+						break;
+					}
+				}
+
+			}
+		}
+		return extension;
+	}
+
 }
