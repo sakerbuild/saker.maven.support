@@ -609,12 +609,13 @@ public class MavenImplUtils {
 			case "maven-plugin":
 			case "ejb-client":
 			case "java-source":
-			case "javadoc": {
+			case "javadoc":
+
+			case "bundle": // packaging for OSGi bundles? (with maven-bundle-plugin) (like javax.websocket:javax.websocket-api)
+			case "kjar": // kjar packaging type, same jar extension (https://developers.redhat.com/blog/2018/03/14/what-is-a-kjar)
 				return "jar";
-			}
-			default: {
+			default:
 				return packaging;
-			}
 		}
 	}
 
@@ -640,24 +641,10 @@ public class MavenImplUtils {
 //				  but we fix this here. 
 
 			String packaging = packagingcollector.getPackaging(artifact);
-			if (packaging != null && !packaging.equals(extension)) {
+			if (!ObjectUtils.isNullOrEmpty(packaging) && !packaging.equals(extension)) {
 				//the packaging is specified in the model of the depenency, and it is not jar
-				//based on https://maven.apache.org/ref/3.8.6/maven-core/artifact-handlers.html
-				switch (packaging) {
-					case "ejb":
-					case "maven-plugin":
-					case "java-source":
-					case "javadoc": {
-						//jar is the extension for these packaging types, okay
-						break;
-					}
-					default: {
-						//in other cases override the extension with the same value as the packaging
-						extension = packaging;
-						break;
-					}
-				}
-
+				//override the extension with the known extension of the packaging
+				extension = getExtensionForPackaging(packaging);
 			}
 		}
 		return extension;
