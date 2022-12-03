@@ -1019,7 +1019,8 @@ public final class MavenOperationConfiguration implements Externalizable {
 		 * @throws NullPointerException
 		 *             If the argument is <code>null</code>.
 		 */
-		public Builder setLocalRepositoryPath(SakerPath localRepositoryPath) throws IllegalArgumentException {
+		public Builder setLocalRepositoryPath(SakerPath localRepositoryPath)
+				throws IllegalArgumentException, NullPointerException {
 			SakerPathFiles.requireAbsolutePath(localRepositoryPath);
 			this.localRepositoryPath = localRepositoryPath;
 			return this;
